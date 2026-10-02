@@ -50,6 +50,10 @@
   </script>
 
   <style>
+    .hidden, [hidden] {
+      display: none !important;
+    }
+
     body {
       background-color: #0B0F19;
       color: #FFFFFF;
@@ -123,7 +127,7 @@
   <!-- ============================================================ -->
   <!-- TOAST DE NOTIFICACIONES                                      -->
   <!-- ============================================================ -->
-  <div id="toast" class="hidden fixed bottom-6 right-6 z-50 py-3 px-4 rounded-xl text-xs font-bold shadow-2xl transition-all duration-300 flex items-center gap-2 border"></div>
+  <div id="toast" style="display: none;" class="fixed bottom-6 right-6 z-50 py-3 px-4 rounded-xl text-xs font-bold shadow-2xl transition-all duration-300 flex items-center gap-2 border"></div>
 
   <!-- ============================================================ -->
   <!-- BARRA SUPERIOR / HEADER                                      -->
@@ -155,7 +159,7 @@
       <div class="flex items-center gap-2 sm:gap-3">
         
         <!-- Chip de Usuario Logueado (Oculto si no hay sesión) -->
-        <div id="user_profile_chip" class="hidden flex items-center gap-2 bg-[#161D2F] border border-[#232D42] rounded-xl px-2.5 py-1.5 shadow-inner">
+        <div id="user_profile_chip" style="display: none;" class="flex items-center gap-2 bg-[#161D2F] border border-[#232D42] rounded-xl px-2.5 py-1.5 shadow-inner">
           <div id="user_avatar" class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#0051FF] to-[#00D2FF] text-[#0B0F19] font-bold text-[10px] flex items-center justify-center">
             U
           </div>
@@ -417,7 +421,7 @@
   <!-- ============================================================ -->
   <!-- MODAL 1: LOGIN / IDENTIFICACIÓN DE MIEMBRO                  -->
   <!-- ============================================================ -->
-  <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+  <div id="login-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
     <div class="glass-card rounded-2xl p-6 sm:p-8 max-w-md w-full border border-[#232D42] shadow-2xl relative">
       <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
 
@@ -485,7 +489,7 @@
   <!-- ============================================================ -->
   <!-- MODAL 2: UPGRADE / MIGRACIÓN A SUPER VIP                    -->
   <!-- ============================================================ -->
-  <div id="upgrade-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+  <div id="upgrade-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="glass-card rounded-2xl p-6 sm:p-8 max-w-md w-full border border-amber-600/40 shadow-glow-gold relative bg-gradient-to-b from-[#161D2F] to-[#0B0F19]">
       <button onclick="closeUpgradeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
 
@@ -533,7 +537,7 @@
   <!-- ============================================================ -->
   <!-- MODAL 3: PIN DE ADMINISTRADOR (9835$$)                      -->
   <!-- ============================================================ -->
-  <div id="admin-pin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+  <div id="admin-pin-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="glass-card rounded-2xl p-6 max-w-sm w-full border border-amber-500/40 shadow-2xl relative text-center">
       <button onclick="closeAdminPinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
 
@@ -572,7 +576,7 @@
   <!-- ============================================================ -->
   <!-- MODAL 4: PANEL DE CONTROL DE ADMINISTRADOR EN VIVO          -->
   <!-- ============================================================ -->
-  <div id="admin-panel-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-lg">
+  <div id="admin-panel-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-lg">
     <div class="glass-card rounded-2xl p-5 sm:p-7 max-w-4xl w-full border border-amber-500/40 shadow-2xl relative max-h-[92vh] flex flex-col">
       
       <!-- Encabezado de Administración -->
@@ -837,20 +841,25 @@
     }
 
     function updateUIForMember(session) {
-      document.getElementById('btn_open_login').classList.add('hidden');
+      const btnLogin = document.getElementById('btn_open_login');
       const chip = document.getElementById('user_profile_chip');
       const emailDisplay = document.getElementById('user_email_display');
       const badgeDisplay = document.getElementById('user_badge_display');
       const tierBadge = document.getElementById('tier_status_badge');
 
-      chip.classList.remove('hidden');
-      emailDisplay.textContent = session.email;
+      if (btnLogin) btnLogin.style.display = 'none';
+      if (chip) chip.style.display = 'flex';
+      if (emailDisplay) emailDisplay.textContent = session.email;
 
       if (session.tier === 'super_vip') {
-        badgeDisplay.textContent = '👑 SUPER VIP';
-        badgeDisplay.className = 'text-[9px] font-mono text-amber-300 font-bold';
-        tierBadge.textContent = '👑 MIEMBRO SUPER VIP (Acceso Total)';
-        tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/50 shadow-glow-gold';
+        if (badgeDisplay) {
+          badgeDisplay.textContent = '👑 SUPER VIP';
+          badgeDisplay.className = 'text-[9px] font-mono text-amber-300 font-bold';
+        }
+        if (tierBadge) {
+          tierBadge.textContent = '👑 MIEMBRO SUPER VIP (Acceso Total)';
+          tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/50 shadow-glow-gold';
+        }
         
         // Actualizar textos de botones Super VIP
         const btnVideo = document.getElementById('btn_txt_video_studio');
@@ -858,19 +867,27 @@
         if (btnVideo) btnVideo.textContent = 'Abrir Studio Video';
         if (btnAgente) btnAgente.textContent = 'Abrir Agente';
       } else {
-        badgeDisplay.textContent = '💎 VIP PRO';
-        badgeDisplay.className = 'text-[9px] font-mono text-[#00D2FF] font-bold';
-        tierBadge.textContent = '💎 MIEMBRO VIP PRO';
-        tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/50 shadow-glow-cyan';
+        if (badgeDisplay) {
+          badgeDisplay.textContent = '💎 VIP PRO';
+          badgeDisplay.className = 'text-[9px] font-mono text-[#00D2FF] font-bold';
+        }
+        if (tierBadge) {
+          tierBadge.textContent = '💎 MIEMBRO VIP PRO';
+          tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/50 shadow-glow-cyan';
+        }
       }
     }
 
     function updateUIForAnonymous() {
-      document.getElementById('btn_open_login').classList.remove('hidden');
-      document.getElementById('user_profile_chip').classList.add('hidden');
+      const btnLogin = document.getElementById('btn_open_login');
+      const chip = document.getElementById('user_profile_chip');
+      if (btnLogin) btnLogin.style.display = 'flex';
+      if (chip) chip.style.display = 'none';
       const tierBadge = document.getElementById('tier_status_badge');
-      tierBadge.textContent = '🔒 Requiere Membresía VIP o Super VIP';
-      tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+      if (tierBadge) {
+        tierBadge.textContent = '🔒 Requiere Membresía VIP o Super VIP';
+        tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+      }
     }
 
     // ------------------------------------------------------------
@@ -932,7 +949,8 @@
     // MODALES (LOGIN, UPGRADE, ADMIN)
     // ------------------------------------------------------------
     function openLoginModal() {
-      document.getElementById('login-modal').classList.remove('hidden');
+      const m = document.getElementById('login-modal');
+      if (m) m.style.display = 'flex';
       const input = document.getElementById('input_member_email');
       if (input) {
         input.value = '';
@@ -940,7 +958,8 @@
       }
     }
     function closeLoginModal() {
-      document.getElementById('login-modal').classList.add('hidden');
+      const m = document.getElementById('login-modal');
+      if (m) m.style.display = 'none';
     }
 
     function openUpgradeModal(appId) {
@@ -957,39 +976,45 @@
         whatsappBtn.href = `https://wa.me/51985332135?text=Hola%20A%5CDAN%20SOLUTIONS%2C%20ya%20soy%20miembro%20VIP%20PRO%20(${currentEmail})%20y%20deseo%20migrar%20mi%20cuenta%20al%20plan%20SUPER%20VIP%20para%20desbloquear%20los%20modulos%20avanzados`;
       }
 
-      document.getElementById('upgrade-modal').classList.remove('hidden');
+      const m = document.getElementById('upgrade-modal');
+      if (m) m.style.display = 'flex';
     }
     function closeUpgradeModal() {
-      document.getElementById('upgrade-modal').classList.add('hidden');
+      const m = document.getElementById('upgrade-modal');
+      if (m) m.style.display = 'none';
     }
 
     function openAdminModal() {
       const pinModal = document.getElementById('admin-pin-modal');
       const pinInput = document.getElementById('admin_pin_input');
       const pinError = document.getElementById('admin_pin_error');
-      if (pinError) pinError.classList.add('hidden');
+      if (pinError) pinError.style.display = 'none';
       if (pinInput) pinInput.value = '';
-      pinModal.classList.remove('hidden');
-      setTimeout(() => pinInput.focus(), 100);
+      if (pinModal) pinModal.style.display = 'flex';
+      setTimeout(() => pinInput && pinInput.focus(), 100);
     }
     function closeAdminPinModal() {
-      document.getElementById('admin-pin-modal').classList.add('hidden');
+      const pinModal = document.getElementById('admin-pin-modal');
+      if (pinModal) pinModal.style.display = 'none';
     }
 
     function verifyAdminPin() {
-      const pin = document.getElementById('admin_pin_input').value;
+      const pinInput = document.getElementById('admin_pin_input');
+      const pin = pinInput ? pinInput.value.trim() : '';
       const errorEl = document.getElementById('admin_pin_error');
 
       if (pin === ADMIN_PIN) {
         closeAdminPinModal();
-        document.getElementById('admin-panel-modal').classList.remove('hidden');
+        const p = document.getElementById('admin-panel-modal');
+        if (p) p.style.display = 'flex';
         loadAdminClients();
       } else {
-        if (errorEl) errorEl.classList.remove('hidden');
+        if (errorEl) errorEl.style.display = 'block';
       }
     }
     function closeAdminPanel() {
-      document.getElementById('admin-panel-modal').classList.add('hidden');
+      const p = document.getElementById('admin-panel-modal');
+      if (p) p.style.display = 'none';
     }
 
     // ------------------------------------------------------------
@@ -1189,6 +1214,7 @@
     // Utilidad de Toasts
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
+      if (!toast) return;
       toast.textContent = message;
 
       if (type === 'success') {
@@ -1199,8 +1225,8 @@
         toast.className = 'fixed bottom-6 right-6 z-50 py-3 px-4 rounded-xl text-xs font-bold shadow-2xl transition-all duration-300 flex items-center gap-2 border bg-[#161D2F] border-[#00D2FF] text-[#00D2FF]';
       }
 
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3500);
+      toast.style.display = 'flex';
+      setTimeout(() => { toast.style.display = 'none'; }, 3500);
     }
   </script>
 </body>

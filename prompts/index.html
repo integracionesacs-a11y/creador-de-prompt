@@ -48,6 +48,10 @@
   </script>
 
   <style>
+    .hidden, [hidden] {
+      display: none !important;
+    }
+
     body {
       background-color: #0B0F19;
       color: #FFFFFF;
@@ -143,7 +147,7 @@
   <!-- ============================================================ -->
   <!-- 2. PANTALLA DE LOGIN / BLOQUEO (ACCESO RESTRINGIDO)         -->
   <!-- ============================================================ -->
-  <div id="login-screen" class="hidden min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-40 bg-[#0B0F19]">
+  <div id="login-screen" style="display: none;" class="min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-40 bg-[#0B0F19]">
     
     <div class="glass-card rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-card border border-[#232D42] text-center relative z-10">
       
@@ -238,7 +242,7 @@
   <!-- ============================================================ -->
   <!-- 3. INTERFAZ COMPLETA DEL OPTIMIZADOR (APP-PROMPTS)          -->
   <!-- ============================================================ -->
-  <div id="app-prompts" class="hidden">
+  <div id="app-prompts" style="display: none;">
 
     <!-- ============================================================ -->
     <!-- BARRA SUPERIOR / HEADER                                      -->
@@ -871,7 +875,7 @@
   <!-- ============================================================ -->
   <!-- MODAL DE CONFIGURACIÓN SUPABASE (AJUSTES API)                -->
   <!-- ============================================================ -->
-  <div id="config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+  <div id="config-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
     <div class="glass-card rounded-2xl p-6 max-w-md w-full border border-[#232D42] shadow-2xl relative">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-bold text-white font-display flex items-center gap-2">
@@ -955,12 +959,12 @@
     function toggleConfigModal() {
       const modal = document.getElementById('config-modal');
       const cfg = getSupabaseConfig();
-      if (!modal.classList.contains('hidden')) {
-        modal.classList.add('hidden');
+      if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
       } else {
         document.getElementById('cfg_supabase_url').value = cfg.url.includes('TU-PROYECTO') ? '' : cfg.url;
         document.getElementById('cfg_supabase_anon_key').value = cfg.anonKey.includes('TU-ANON') ? '' : cfg.anonKey;
-        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
       }
     }
 
@@ -1023,14 +1027,16 @@
         if (client && client.email) {
           // Desbloqueas la interfaz del creador de prompts
           localStorage.setItem('aidan_authorized_email', client.email.toLowerCase());
-          document.getElementById('login-screen').classList.add('hidden');
-          document.getElementById('app-prompts').classList.remove('hidden');
-          if (unauthBox) unauthBox.classList.add('hidden');
+          const loginScreen = document.getElementById('login-screen');
+          const appPrompts = document.getElementById('app-prompts');
+          if (loginScreen) loginScreen.style.display = 'none';
+          if (appPrompts) appPrompts.style.display = 'block';
+          if (unauthBox) unauthBox.style.display = 'none';
           setupUserChip({ email: client.email });
         } else {
           // Acceso no autorizado
           if (unauthBox) {
-            unauthBox.classList.remove('hidden');
+            unauthBox.style.display = 'block';
             document.getElementById('unauthorized-email').textContent = email;
           }
           alert('Acceso no autorizado. Este correo no tiene una suscripción activa de Google AI Pro.');
@@ -1038,7 +1044,7 @@
       } catch (err) {
         console.error('Error al verificar correo:', err);
         if (unauthBox) {
-          unauthBox.classList.remove('hidden');
+          unauthBox.style.display = 'block';
           document.getElementById('unauthorized-email').textContent = email;
         }
         alert('Acceso no autorizado. Este correo no tiene una suscripción activa de Google AI Pro.');
@@ -1057,13 +1063,13 @@
       const appPrompts = document.getElementById('app-prompts');
 
       const finishLoading = (showApp = false) => {
-        if (loader) loader.classList.add('hidden');
+        if (loader) loader.style.display = 'none';
         if (showApp) {
-          if (loginScreen) loginScreen.classList.add('hidden');
-          if (appPrompts) appPrompts.classList.remove('hidden');
+          if (loginScreen) loginScreen.style.display = 'none';
+          if (appPrompts) appPrompts.style.display = 'block';
         } else {
-          if (loginScreen) loginScreen.classList.remove('hidden');
-          if (appPrompts) appPrompts.classList.add('hidden');
+          if (loginScreen) loginScreen.style.display = 'flex';
+          if (appPrompts) appPrompts.style.display = 'none';
         }
       };
 
@@ -2145,9 +2151,9 @@
       const loader = document.getElementById('auth-loading');
       const appPrompts = document.getElementById('app-prompts');
       const loginScreen = document.getElementById('login-screen');
-      if (loader && !loader.classList.contains('hidden') && appPrompts && appPrompts.classList.contains('hidden')) {
-        loader.classList.add('hidden');
-        if (loginScreen) loginScreen.classList.remove('hidden');
+      if (loader && loader.style.display !== 'none' && appPrompts && appPrompts.style.display === 'none') {
+        loader.style.display = 'none';
+        if (loginScreen) loginScreen.style.display = 'flex';
       }
     }, 3500);
 
