@@ -16,20 +16,16 @@ git push origin main
 
 echo ""
 echo "📦 [3/3] Desplegando en vivo a Netlify..."
-npx --yes netlify-cli deploy --prod --dir=. --site creador-de-prompts-aidan
+npx --yes netlify-cli deploy --prod --dir=.
 
 if [ $? -eq 0 ]; then
   echo ""
   echo "=========================================================="
   echo "✅ ¡WEB EN PRODUCCION ACTUALIZADA CON EXITO!"
-  echo "🌐 URL en vivo: https://creador-de-prompts-aidan.netlify.app"
+  echo "🌐 URL Hub Principal: https://creador-de-prompts-aidan.netlify.app"
+  echo "⚡ URL Creador Prompts: https://creador-de-prompts-aidan.netlify.app/prompts/"
   echo "=========================================================="
 else
   echo ""
-  echo "=========================================================="
-  echo "⚠️ ATENCION: Requiere autorizacion unica de Netlify en tu PC."
-  echo "👉 Ejecuta en tu terminal:"
-  echo "   npx netlify-cli login"
-  echo "Despues vuelve a ejecutar ./actualizar_web.sh"
-  echo "=========================================================="
+  echo "❌ Error durante la publicacion en Netlify."
 fi

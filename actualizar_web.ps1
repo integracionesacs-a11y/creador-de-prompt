@@ -2,35 +2,28 @@
 # Script de Despliegue Rapido (PowerShell) - A\DAN SOLUTIONS
 # ============================================================
 
-Write-Host "[1/3] Preparando cambios locales..." -ForegroundColor Cyan
+Write-Host "🚀 [1/3] Preparando cambios locales..." -ForegroundColor Cyan
 git add .
 $status = git status --porcelain
 if ($status) {
     git commit -m "update web: sincronizacion Suite A\DAN"
 }
 
-Write-Host "[2/3] Sincronizando con GitHub main..." -ForegroundColor Cyan
+Write-Host "📤 [2/3] Sincronizando con GitHub (origin/main)..." -ForegroundColor Cyan
 git push origin main
 
 Write-Host ""
-Write-Host "[3/3] Desplegando en vivo a Netlify..." -ForegroundColor Cyan
-npx --yes netlify-cli deploy --prod --dir=. --site creador-de-prompts-aidan
+Write-Host "📦 [3/3] Desplegando en vivo a Netlify..." -ForegroundColor Cyan
+npx --yes netlify-cli deploy --prod --dir=.
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "==========================================================" -ForegroundColor Green
-    Write-Host ">> WEB EN PRODUCCION ACTUALIZADA CON EXITO <<" -ForegroundColor Green
-    Write-Host "URL en vivo: https://creador-de-prompts-aidan.netlify.app" -ForegroundColor Cyan
+    Write-Host "✅ ¡WEB EN PRODUCCION ACTUALIZADA CON EXITO!" -ForegroundColor Green
+    Write-Host "🌐 URL Hub Principal: https://creador-de-prompts-aidan.netlify.app" -ForegroundColor Cyan
+    Write-Host "⚡ URL Creador Prompts: https://creador-de-prompts-aidan.netlify.app/prompts/" -ForegroundColor Cyan
     Write-Host "==========================================================" -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "==========================================================" -ForegroundColor Yellow
-    Write-Host "ATENCION: Requiere autorizacion unica de Netlify en tu PC." -ForegroundColor Yellow
-    Write-Host "Para conectar tu cuenta de Netlify de forma interactiva:" -ForegroundColor White
-    Write-Host "Ejecuta en tu terminal de VS Code o PowerShell:" -ForegroundColor White
-    Write-Host "   npx netlify-cli login" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Se abrira tu navegador para presionar 'Authorize'." -ForegroundColor White
-    Write-Host "Despues de autorizar, vuelve a ejecutar .\actualizar_web.ps1" -ForegroundColor White
-    Write-Host "==========================================================" -ForegroundColor Yellow
+    Write-Host "❌ Error durante la publicacion en Netlify." -ForegroundColor Red
 }
