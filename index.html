@@ -580,111 +580,155 @@
     <div class="glass-card rounded-2xl p-5 sm:p-7 max-w-4xl w-full border border-amber-500/40 shadow-2xl relative max-h-[92vh] flex flex-col">
       
       <!-- Encabezado de Administración -->
-      <div class="flex items-center justify-between border-b border-[#232D42] pb-4 mb-5">
+      <div class="flex items-center justify-between border-b border-[#232D42] pb-4 mb-4">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg">
             👑
           </div>
           <div>
             <h2 class="text-base sm:text-xl font-bold text-white font-display flex items-center gap-2">
-              Panel de Administrador • Gestión de Clientes
+              Panel Maestro de Administrador • A\DAN SOLUTIONS
             </h2>
             <p class="text-xs text-amber-300 font-mono">
-              Base de Datos Supabase en Vivo (clientes_autorizados)
+              Control de Clientes, Membresías y Niveles de Herramientas
             </p>
           </div>
         </div>
         <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-white text-base cursor-pointer p-1">✕</button>
       </div>
 
-      <!-- Métricas Rápidas -->
-      <div class="grid grid-cols-3 gap-3 mb-5">
-        <div class="p-3 rounded-xl bg-[#0B0F19] border border-[#232D42] text-center">
-          <span class="text-[10px] uppercase font-mono text-slate-400 block">Total Clientes</span>
-          <span id="stat_total" class="text-lg sm:text-2xl font-bold text-white font-mono">0</span>
-        </div>
-        <div class="p-3 rounded-xl bg-[#0B0F19] border border-[#00D2FF]/30 text-center">
-          <span class="text-[10px] uppercase font-mono text-[#00D2FF] block">💎 VIP PRO</span>
-          <span id="stat_vip" class="text-lg sm:text-2xl font-bold text-[#00D2FF] font-mono">0</span>
-        </div>
-        <div class="p-3 rounded-xl bg-[#0B0F19] border border-amber-500/30 text-center">
-          <span class="text-[10px] uppercase font-mono text-amber-300 block">👑 SUPER VIP</span>
-          <span id="stat_super" class="text-lg sm:text-2xl font-bold text-amber-300 font-mono">0</span>
-        </div>
-      </div>
-
-      <!-- Formulario para Registrar Nuevo Cliente Directo -->
-      <div class="p-4 rounded-xl bg-[#0B0F19] border border-[#232D42] mb-5">
-        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-          <span>➕</span> Registrar Nuevo Cliente (Venta Suelta o Directa)
-        </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          <div class="sm:col-span-5">
-            <input 
-              type="email" 
-              id="new_client_email" 
-              placeholder="correo-cliente@gmail.com" 
-              class="w-full bg-[#161D2F] border border-[#232D42] rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00D2FF] font-mono"
-            >
-          </div>
-          <div class="sm:col-span-4">
-            <select id="new_client_tier" class="w-full bg-[#161D2F] border border-[#232D42] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#00D2FF] font-mono cursor-pointer">
-              <option value="vip">💎 Nivel: VIP PRO</option>
-              <option value="super_vip">👑 Nivel: SUPER VIP</option>
-            </select>
-          </div>
-          <div class="sm:col-span-3">
-            <button 
-              onclick="createNewClient()" 
-              id="btn_add_client"
-              class="w-full py-2.5 rounded-xl gradient-btn-primary text-[#0B0F19] font-bold text-xs flex items-center justify-center gap-1 cursor-pointer shadow"
-            >
-              <span>➕ Dar Acceso</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Barra de Búsqueda y Recarga -->
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <div class="relative flex-1">
-          <input 
-            type="text" 
-            id="admin_search_input" 
-            oninput="filterClientsTable(this.value)"
-            placeholder="Buscar por correo electrónico..."
-            class="w-full bg-[#0B0F19] border border-[#232D42] rounded-xl py-2 px-3 pl-8 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
-          >
-          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">🔍</span>
-        </div>
-        <button onclick="loadAdminClients(true)" title="Refrescar Lista" class="px-3 py-2 rounded-xl bg-[#161D2F] border border-[#232D42] hover:border-amber-400 text-slate-300 hover:text-white text-xs font-mono transition flex items-center gap-1 cursor-pointer">
-          <span>🔄</span> <span class="hidden sm:inline">Refrescar</span>
+      <!-- Selector de Pestañas del Administrador -->
+      <div class="flex items-center gap-2 border-b border-[#232D42] pb-3 mb-4">
+        <button id="admin_tab_clients_btn" onclick="switchAdminTab('clients')" class="px-4 py-2 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer flex items-center gap-2">
+          <span>👥</span> Gestión de Clientes
+        </button>
+        <button id="admin_tab_modules_btn" onclick="switchAdminTab('modules')" class="px-4 py-2 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer flex items-center gap-2">
+          <span>🎛️</span> Control de Módulos & Promociones
         </button>
       </div>
 
-      <!-- Tabla de Clientes con Scroll -->
-      <div class="flex-1 overflow-y-auto border border-[#232D42] rounded-xl bg-[#0B0F19] custom-scrollbar">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="sticky top-0 bg-[#161D2F] text-[10px] uppercase font-mono text-slate-400 border-b border-[#232D42]">
-            <tr>
-              <th class="p-3">Correo</th>
-              <th class="p-3">Nivel Actual</th>
-              <th class="p-3 hidden sm:table-cell">Origen</th>
-              <th class="p-3 hidden md:table-cell">Fecha</th>
-              <th class="p-3 text-right">Acciones de Migración</th>
-            </tr>
-          </thead>
-          <tbody id="clients_table_body" class="divide-y divide-[#232D42] font-mono text-slate-300">
-            <tr>
-              <td colspan="5" class="p-6 text-center text-slate-500 italic">
-                Cargando clientes de la base de datos...
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- VISTA 1: GESTIÓN DE CLIENTES -->
+      <div id="admin_view_clients" class="flex-1 flex flex-col overflow-hidden">
+        <!-- Métricas Rápidas -->
+        <div class="grid grid-cols-3 gap-3 mb-4 shrink-0">
+          <div class="p-3 rounded-xl bg-[#0B0F19] border border-[#232D42] text-center">
+            <span class="text-[10px] uppercase font-mono text-slate-400 block">Total Clientes</span>
+            <span id="stat_total" class="text-lg sm:text-2xl font-bold text-white font-mono">0</span>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0B0F19] border border-[#00D2FF]/30 text-center">
+            <span class="text-[10px] uppercase font-mono text-[#00D2FF] block">💎 VIP PRO</span>
+            <span id="stat_vip" class="text-lg sm:text-2xl font-bold text-[#00D2FF] font-mono">0</span>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0B0F19] border border-amber-500/30 text-center">
+            <span class="text-[10px] uppercase font-mono text-amber-300 block">👑 SUPER VIP</span>
+            <span id="stat_super" class="text-lg sm:text-2xl font-bold text-amber-300 font-mono">0</span>
+          </div>
+        </div>
+
+        <!-- Formulario para Registrar Nuevo Cliente Directo -->
+        <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42] mb-4 shrink-0">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-2">
+            <span>➕</span> Registrar Nuevo Cliente (Venta Suelta o Directa)
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-5">
+              <input 
+                type="email" 
+                id="new_client_email" 
+                placeholder="correo-cliente@gmail.com" 
+                class="w-full bg-[#161D2F] border border-[#232D42] rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00D2FF] font-mono"
+              >
+            </div>
+            <div class="sm:col-span-4">
+              <select id="new_client_tier" class="w-full bg-[#161D2F] border border-[#232D42] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#00D2FF] font-mono cursor-pointer">
+                <option value="vip">💎 Nivel: VIP PRO</option>
+                <option value="super_vip">👑 Nivel: SUPER VIP</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <button 
+                onclick="createNewClient()" 
+                id="btn_add_client"
+                class="w-full py-2.5 rounded-xl gradient-btn-primary text-[#0B0F19] font-bold text-xs flex items-center justify-center gap-1 cursor-pointer shadow"
+              >
+                <span>➕ Dar Acceso</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Búsqueda y Recarga -->
+        <div class="flex items-center justify-between gap-3 mb-3 shrink-0">
+          <div class="relative flex-1">
+            <input 
+              type="text" 
+              id="admin_search_input" 
+              oninput="filterClientsTable(this.value)"
+              placeholder="Buscar por correo electrónico..."
+              class="w-full bg-[#0B0F19] border border-[#232D42] rounded-xl py-2 px-3 pl-8 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+            >
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">🔍</span>
+          </div>
+          <button onclick="loadAdminClients(true)" title="Refrescar Lista" class="px-3 py-2 rounded-xl bg-[#161D2F] border border-[#232D42] hover:border-amber-400 text-slate-300 hover:text-white text-xs font-mono transition flex items-center gap-1 cursor-pointer">
+            <span>🔄</span> <span class="hidden sm:inline">Refrescar</span>
+          </button>
+        </div>
+
+        <!-- Tabla de Clientes con Scroll -->
+        <div class="flex-1 overflow-y-auto border border-[#232D42] rounded-xl bg-[#0B0F19] custom-scrollbar">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 bg-[#161D2F] text-[10px] uppercase font-mono text-slate-400 border-b border-[#232D42]">
+              <tr>
+                <th class="p-3">Correo</th>
+                <th class="p-3">Nivel Actual</th>
+                <th class="p-3 hidden sm:table-cell">Origen</th>
+                <th class="p-3 hidden md:table-cell">Fecha</th>
+                <th class="p-3 text-right">Acciones de Migración</th>
+              </tr>
+            </thead>
+            <tbody id="clients_table_body" class="divide-y divide-[#232D42] font-mono text-slate-300">
+              <tr>
+                <td colspan="5" class="p-6 text-center text-slate-500 italic">
+                  Cargando clientes de la base de datos...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="mt-4 pt-3 border-t border-[#232D42] flex items-center justify-between text-xs text-slate-400">
+      <!-- VISTA 2: GESTIÓN DE MÓDULOS & PROMOCIONES -->
+      <div id="admin_view_modules" style="display: none;" class="flex-1 flex flex-col overflow-hidden">
+        <!-- Banner Informativo -->
+        <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-amber-500/30 mb-3 flex items-start gap-3 shrink-0">
+          <span class="text-xl">🎛️</span>
+          <div>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-1">
+              Control de Accesos & Promociones por Tiempo Limitado
+            </h4>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              Aquí puedes cambiar el nivel de cualquier herramienta en tiempo real. Por ejemplo: si lanzas una promoción especial por una semana para soltar una herramienta <strong class="text-amber-300">SUPER VIP</strong> a miembros <strong class="text-[#00D2FF]">VIP PRO</strong> (por un costo de 5 soles), cámbiala abajo y presiona <strong class="text-white">Guardar</strong>. Al finalizar tu promoción, regrésala a SUPER VIP con un solo clic.
+            </p>
+          </div>
+        </div>
+
+        <!-- Lista de Módulos Configurable -->
+        <div class="flex-1 overflow-y-auto border border-[#232D42] rounded-xl bg-[#0B0F19] p-3 space-y-3 custom-scrollbar" id="admin_modules_list_container">
+          <!-- Renderizado dinámico vía renderAdminModulesList() -->
+        </div>
+
+        <!-- Botones de Acción de Módulos -->
+        <div class="mt-3 pt-3 border-t border-[#232D42] flex items-center justify-between gap-3 shrink-0">
+          <button onclick="resetAdminModulesConfig()" class="px-3 py-2 rounded-xl border border-[#232D42] hover:border-slate-500 text-slate-400 hover:text-white text-xs font-mono transition cursor-pointer">
+            🔄 Restablecer Niveles Predeterminados
+          </button>
+          <button onclick="saveAdminModulesConfig()" id="btn_save_modules_config" class="px-5 py-2.5 rounded-xl gradient-btn-gold text-slate-950 font-bold text-xs flex items-center gap-2 cursor-pointer shadow-glow-gold">
+            <span>💾 Guardar y Aplicar Niveles en Vivo</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-[#232D42] flex items-center justify-between text-xs text-slate-400 shrink-0">
         <span class="font-mono text-[11px]">A\DAN SOLUTIONS Security • PIN: 9835$$</span>
         <button onclick="closeAdminPanel()" class="px-3 py-1.5 rounded-lg border border-[#232D42] hover:bg-[#161D2F] text-slate-300 transition cursor-pointer">
           Cerrar Panel
@@ -707,6 +751,54 @@
     let currentUserSession = null; // { email: '', tier: 'vip' | 'super_vip' }
     let cachedClients = [];
 
+    // ============================================================
+    // REGISTRO MAESTRO DE MÓDULOS DE LA SUITE
+    // Todas las nuevas herramientas analizadas se registrarán aquí.
+    // Por defecto se configuran en: 'super_vip'
+    // ============================================================
+    const MODULES_REGISTRY = [
+      {
+        id: 'prompts',
+        name: 'Optimizador de Prompts Cinematográficos',
+        icon: '🎬',
+        desc: 'Dirección cinematográfica asistida para Gemini Omni Flash 1.1, Veo, Nano Banana 2 e Imagen 3. Genera directivas con óptica de lentes reales, movimiento y capa de audio diegético foley HD sincronizado en inglés formal.',
+        tags: ['Óptica 35/85mm', 'Foley Sincronizado', 'Auto-Director ✨'],
+        defaultTier: 'vip',
+        url: './prompts/'
+      },
+      {
+        id: 'negocios',
+        name: 'Generador de Creativos & Facebook Ads',
+        icon: '🛍️',
+        desc: 'Suite especializada en conversión comercial para Meta Ads, TikTok Shop y Amazon. Diseña fotos de producto en pedestal, mockups hiperrealistas y ganchos de alta atención para tus campañas publicitarias.',
+        tags: ['E-commerce 1:1', 'Reels 9:16', 'Catálogo 4K'],
+        defaultTier: 'vip',
+        url: null
+      },
+      {
+        id: 'video_studio',
+        name: 'Studio Render de Video IA',
+        icon: '🎥',
+        desc: 'Potencia de renderizado cinematográfico con Google Veo & Sora Engine. Diseñado para secuencias complejas de alta tasa de cuadros, render de avatar digital y transiciones multi-toma que requieren alto cómputo.',
+        tags: ['Alto Cómputo', 'Veo Engine', 'Render 60fps'],
+        defaultTier: 'super_vip',
+        url: null
+      },
+      {
+        id: 'agente_ia',
+        name: 'Agente Autónomo de Redes & Contenido',
+        icon: '🤖',
+        desc: 'Piloto automático integral: creación de guiones virales, ensamble de material audiovisual, clonación de voz y programación automatizada para TikTok, Reels y YouTube Shorts sin intervención manual.',
+        tags: ['Autopiloto 24/7', 'Voz Neuronal', 'Multiplataforma'],
+        defaultTier: 'super_vip',
+        url: null
+      }
+    ];
+
+    // Configuración activa de niveles de módulos (por defecto toma defaultTier)
+    let currentModulesTierConfig = {};
+    let currentFilterTier = 'all';
+
     // Inicializar Supabase
     function initSupabase() {
       if (!supabaseClient && window.supabase) {
@@ -718,8 +810,185 @@
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', async () => {
       initSupabase();
+      initModulesSystem();
       await restoreUserSession();
     });
+
+    // ------------------------------------------------------------
+    // SISTEMA DINÁMICO DE MÓDULOS & PROMOCIONES
+    // ------------------------------------------------------------
+    function initModulesSystem() {
+      // 1. Cargar defaults
+      MODULES_REGISTRY.forEach(m => {
+        currentModulesTierConfig[m.id] = m.defaultTier;
+      });
+
+      // 2. Cargar caché local para renderizado instantáneo
+      try {
+        const saved = localStorage.getItem('aidan_modules_tier_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          Object.assign(currentModulesTierConfig, parsed);
+        }
+      } catch (e) {
+        console.warn('Error leyendo config local:', e);
+      }
+
+      // 3. Renderizar Hub inicial
+      renderHubModules();
+
+      // 4. Sincronizar remotamente con Supabase en segundo plano
+      syncRemoteModulesConfig();
+    }
+
+    async function syncRemoteModulesConfig() {
+      if (!initSupabase()) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('clientes_autorizados')
+          .select('origen')
+          .like('email', 'cfg_%@aidan.system')
+          .order('id', { ascending: false })
+          .limit(1);
+
+        if (data && data.length > 0 && data[0].origen) {
+          const remoteConfig = JSON.parse(data[0].origen);
+          let changed = false;
+          for (const key in remoteConfig) {
+            if (currentModulesTierConfig[key] !== remoteConfig[key]) {
+              currentModulesTierConfig[key] = remoteConfig[key];
+              changed = true;
+            }
+          }
+          if (changed) {
+            localStorage.setItem('aidan_modules_tier_config', JSON.stringify(currentModulesTierConfig));
+            renderHubModules();
+            const adminModal = document.getElementById('admin-panel-modal');
+            if (adminModal && adminModal.style.display === 'flex') {
+              renderAdminModulesList();
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error sincronizando config remota de módulos:', e);
+      }
+    }
+
+    function renderHubModules(tierFilter = null) {
+      if (tierFilter !== null) currentFilterTier = tierFilter;
+      const grid = document.getElementById('modules_grid');
+      if (!grid) return;
+
+      const userTier = currentUserSession ? currentUserSession.tier : 'anonymous';
+
+      const filtered = MODULES_REGISTRY.filter(m => {
+        const modTier = currentModulesTierConfig[m.id] || m.defaultTier;
+        if (currentFilterTier === 'all') return true;
+        if (currentFilterTier === 'vip') return modTier === 'vip' || modTier === 'public';
+        if (currentFilterTier === 'super_vip') return modTier === 'super_vip';
+        return true;
+      });
+
+      grid.innerHTML = filtered.map(m => {
+        const modTier = currentModulesTierConfig[m.id] || m.defaultTier;
+        const isSuper = modTier === 'super_vip';
+        const isPublic = modTier === 'public';
+
+        let cardBorder, glowClass, badgeHtml, btnClass, footerStatusHtml, btnLabel;
+
+        if (isSuper) {
+          cardBorder = 'border-amber-900/40 hover:shadow-glow-gold';
+          glowClass = 'glass-card-gold bg-gradient-to-b from-[#161D2F] to-[#0B0F19]';
+          badgeHtml = `
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40 shadow-sm">
+              <span>👑</span> SUPER VIP
+            </span>
+          `;
+          footerStatusHtml = `
+            <span class="text-[11px] text-amber-400 font-mono flex items-center gap-1.5">
+              <span>👑</span> Nivel Máximo
+            </span>
+          `;
+          const canAccess = userTier === 'super_vip';
+          btnLabel = canAccess ? 'Abrir Aplicativo' : 'Acceder / Migrar';
+          btnClass = 'gradient-btn-gold text-slate-950 font-bold text-xs shadow-glow-gold';
+        } else if (isPublic) {
+          cardBorder = 'border-emerald-500/40 hover:shadow-[0_0_25px_rgba(16,185,129,0.25)]';
+          glowClass = 'bg-gradient-to-b from-[#161D2F] to-[#0B0F19]';
+          badgeHtml = `
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-sm animate-pulse">
+              <span>🌐</span> ACCESO LIBRE / PROMO
+            </span>
+          `;
+          footerStatusHtml = `
+            <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
+              <span>✨</span> Promoción Disponible
+            </span>
+          `;
+          btnLabel = 'Abrir Aplicativo';
+          btnClass = 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow';
+        } else {
+          // VIP PRO
+          cardBorder = 'border-[#232D42] hover:shadow-glow-cyan';
+          glowClass = 'bg-gradient-to-b from-[#161D2F] to-[#0B0F19]';
+          badgeHtml = `
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/40 shadow-sm">
+              <span>💎</span> VIP PRO
+            </span>
+          `;
+          footerStatusHtml = m.id === 'prompts' ? `
+            <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Activo & Operativo
+            </span>
+          ` : `
+            <span class="text-[11px] text-[#00D2FF] font-mono flex items-center gap-1.5">
+              <span>⚡</span> Incluido en membresía
+            </span>
+          `;
+          btnLabel = 'Abrir Aplicativo';
+          btnClass = 'gradient-btn-primary text-[#0B0F19] font-bold text-xs shadow';
+        }
+
+        const tagsHtml = m.tags.map(t => `<span class="px-2 py-0.5 rounded bg-[#0B0F19] border ${isSuper ? 'border-amber-900/40 text-amber-200' : isPublic ? 'border-emerald-900/40 text-emerald-200' : 'border-[#232D42] text-slate-400'}">${t}</span>`).join('');
+
+        const lockIcon = (isSuper && userTier !== 'super_vip') || (!isPublic && userTier === 'anonymous') ? '<span class="text-xs">🔒</span>' : '';
+
+        return `
+          <div class="module-card glass-card rounded-2xl p-6 flex flex-col justify-between border ${cardBorder} transition duration-300 relative group ${glowClass}" data-tier="${modTier}">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div class="w-12 h-12 rounded-xl ${isSuper ? 'bg-gradient-to-br from-amber-600 via-yellow-500 to-amber-700 text-slate-900 shadow-glow-gold' : isPublic ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-glow-cyan'} flex items-center justify-center text-2xl font-bold">
+                ${m.icon}
+              </div>
+              ${badgeHtml}
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-bold text-white font-display ${isSuper ? 'group-hover:text-amber-300' : isPublic ? 'group-hover:text-emerald-300' : 'group-hover:text-[#00D2FF]'} transition">
+                  ${m.name}
+                </h3>
+                ${lockIcon}
+              </div>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                ${m.desc}
+              </p>
+
+              <div class="mt-4 flex flex-wrap gap-2 text-[10px] font-mono">
+                ${tagsHtml}
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t ${isSuper ? 'border-amber-900/40' : isPublic ? 'border-emerald-900/40' : 'border-[#232D42]'} flex items-center justify-between">
+              ${footerStatusHtml}
+              <button onclick="launchApp('${m.id}')" class="px-4 py-2 rounded-xl ${btnClass} flex items-center gap-1.5 cursor-pointer transition">
+                <span>${btnLabel}</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
     // ------------------------------------------------------------
     // GESTIÓN DE SESIÓN Y NIVELES (VIP PRO vs SUPER VIP)
@@ -758,7 +1027,6 @@
         }
       } catch (e) {
         console.warn('Error validando sesión:', e);
-        // Si hay error temporal de red, restauramos sesión de localStorage
         const cachedTier = localStorage.getItem('aidan_user_level') || 'vip';
         currentUserSession = { email: savedEmail, tier: cachedTier };
         updateUIForMember(currentUserSession);
@@ -860,12 +1128,6 @@
           tierBadge.textContent = '👑 MIEMBRO SUPER VIP (Acceso Total)';
           tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/50 shadow-glow-gold';
         }
-        
-        // Actualizar textos de botones Super VIP
-        const btnVideo = document.getElementById('btn_txt_video_studio');
-        const btnAgente = document.getElementById('btn_txt_agente_ia');
-        if (btnVideo) btnVideo.textContent = 'Abrir Studio Video';
-        if (btnAgente) btnAgente.textContent = 'Abrir Agente';
       } else {
         if (badgeDisplay) {
           badgeDisplay.textContent = '💎 VIP PRO';
@@ -876,6 +1138,8 @@
           tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/50 shadow-glow-cyan';
         }
       }
+
+      renderHubModules();
     }
 
     function updateUIForAnonymous() {
@@ -888,61 +1152,67 @@
         tierBadge.textContent = '🔒 Requiere Membresía VIP o Super VIP';
         tierBadge.className = 'font-bold font-mono px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
       }
+
+      renderHubModules();
     }
 
     // ------------------------------------------------------------
     // LANZAMIENTO DE HERRAMIENTAS & CONTROL DE ACCESO
     // ------------------------------------------------------------
-    function launchApp(appId, requiredTier) {
-      // El Optimizador de Prompts se abre de inmediato (cuenta con su propia verificación en /prompts/)
-      if (appId === 'prompts') {
-        window.location.href = './prompts/';
+    function launchApp(appId) {
+      const mod = MODULES_REGISTRY.find(m => m.id === appId);
+      const modTier = currentModulesTierConfig[appId] || (mod ? mod.defaultTier : 'vip');
+
+      // 1. Si el módulo está liberado en acceso PÚBLICO:
+      if (modTier === 'public') {
+        if (mod && mod.url) {
+          window.location.href = mod.url;
+        } else {
+          showToast(`🚀 Abriendo ${mod ? mod.name : 'herramienta'} (Promoción pública activa)`, 'success');
+        }
         return;
       }
 
+      // 2. Si no es público y no hay usuario autenticado:
       if (!currentUserSession) {
         openLoginModal();
         return;
       }
 
-      // Si la herramienta es Super VIP y el usuario solo es VIP:
-      if (requiredTier === 'super_vip' && currentUserSession.tier !== 'super_vip') {
+      // 3. Si el módulo está en SUPER VIP y el usuario solo es VIP:
+      if (modTier === 'super_vip' && currentUserSession.tier !== 'super_vip') {
         openUpgradeModal(appId);
         return;
       }
 
-      // Acceso Permitido
-      if (appId === 'negocios') {
-        showToast('🚀 El módulo Generador de Negocios & Ads se desplegará próximamente en tu Suite VIP', 'info');
+      // 4. Acceso Permitido
+      if (mod && mod.url) {
+        window.location.href = mod.url;
+      } else if (appId === 'negocios') {
+        showToast('🚀 El módulo Generador de Creativos & Ads se desplegará próximamente en tu Suite', 'info');
       } else {
-        showToast('🚀 Este módulo Super VIP se encuentra en calibración final', 'info');
+        showToast(`🚀 Acceso concedido a ${mod ? mod.name : 'módulo'}. Calibración final en curso.`, 'info');
       }
     }
 
     function filterModules(tier) {
-      const cards = document.querySelectorAll('.module-card');
       const tabAll = document.getElementById('tab_all');
       const tabVip = document.getElementById('tab_vip');
       const tabSuper = document.getElementById('tab_super_vip');
 
       [tabAll, tabVip, tabSuper].forEach(btn => {
-        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer";
+        if (btn) btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer";
       });
 
       if (tier === 'all') {
-        tabAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
-        cards.forEach(c => { c.style.display = 'flex'; });
+        if (tabAll) tabAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
       } else if (tier === 'vip') {
-        tabVip.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
-        cards.forEach(c => {
-          c.style.display = (c.dataset.tier === 'vip') ? 'flex' : 'none';
-        });
+        if (tabVip) tabVip.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
       } else if (tier === 'super_vip') {
-        tabSuper.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer";
-        cards.forEach(c => {
-          c.style.display = (c.dataset.tier === 'super_vip') ? 'flex' : 'none';
-        });
+        if (tabSuper) tabSuper.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer";
       }
+
+      renderHubModules(tier);
     }
 
     // ------------------------------------------------------------
@@ -1007,7 +1277,9 @@
         closeAdminPinModal();
         const p = document.getElementById('admin-panel-modal');
         if (p) p.style.display = 'flex';
+        switchAdminTab('clients');
         loadAdminClients();
+        renderAdminModulesList();
       } else {
         if (errorEl) errorEl.style.display = 'block';
       }
@@ -1015,6 +1287,123 @@
     function closeAdminPanel() {
       const p = document.getElementById('admin-panel-modal');
       if (p) p.style.display = 'none';
+    }
+
+    // ------------------------------------------------------------
+    // PESTAÑAS Y CONTROL DE MÓDULOS DE ADMINISTRADOR
+    // ------------------------------------------------------------
+    function switchAdminTab(tabName) {
+      const viewClients = document.getElementById('admin_view_clients');
+      const viewModules = document.getElementById('admin_view_modules');
+      const btnClients = document.getElementById('admin_tab_clients_btn');
+      const btnModules = document.getElementById('admin_tab_modules_btn');
+
+      if (tabName === 'clients') {
+        if (viewClients) viewClients.style.display = 'flex';
+        if (viewModules) viewModules.style.display = 'none';
+        if (btnClients) {
+          btnClients.className = "px-4 py-2 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer flex items-center gap-2";
+        }
+        if (btnModules) {
+          btnModules.className = "px-4 py-2 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer flex items-center gap-2";
+        }
+      } else {
+        if (viewClients) viewClients.style.display = 'none';
+        if (viewModules) viewModules.style.display = 'flex';
+        if (btnClients) {
+          btnClients.className = "px-4 py-2 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer flex items-center gap-2";
+        }
+        if (btnModules) {
+          btnModules.className = "px-4 py-2 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer flex items-center gap-2";
+        }
+        renderAdminModulesList();
+      }
+    }
+
+    function renderAdminModulesList() {
+      const container = document.getElementById('admin_modules_list_container');
+      if (!container) return;
+
+      container.innerHTML = MODULES_REGISTRY.map(m => {
+        const currentTier = currentModulesTierConfig[m.id] || m.defaultTier;
+        const defaultTierLabel = m.defaultTier === 'super_vip' ? '👑 SUPER VIP' : (m.defaultTier === 'vip' ? '💎 VIP PRO' : '🌐 PÚBLICO');
+
+        return `
+          <div class="p-3.5 rounded-xl bg-[#161D2F] border border-[#232D42] flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-amber-500/30 transition">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#0B0F19] border border-[#232D42] flex items-center justify-center text-xl shrink-0">
+                ${m.icon}
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h5 class="text-xs font-bold text-white font-display">${m.name}</h5>
+                  <span class="text-[9px] font-mono text-slate-400 bg-[#0B0F19] px-2 py-0.5 rounded border border-[#232D42]">Base: ${defaultTierLabel}</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5 max-w-md line-clamp-1">${m.desc}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
+              <label class="text-[10px] uppercase font-mono text-slate-400 hidden sm:inline">Nivel Activo:</label>
+              <select id="admin_tier_select_${m.id}" class="bg-[#0B0F19] border border-amber-500/50 rounded-xl py-1.5 px-3 text-xs text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-400 cursor-pointer">
+                <option value="super_vip" ${currentTier === 'super_vip' ? 'selected' : ''}>👑 SUPER VIP (Solo Super VIP)</option>
+                <option value="vip" ${currentTier === 'vip' ? 'selected' : ''}>💎 VIP PRO (Abierto a VIP)</option>
+                <option value="public" ${currentTier === 'public' ? 'selected' : ''}>🌐 PÚBLICO (Acceso Libre)</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveAdminModulesConfig() {
+      const btn = document.getElementById('btn_save_modules_config');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin">🔄</span> Sincronizando con Supabase...`;
+      }
+
+      const updated = {};
+      MODULES_REGISTRY.forEach(m => {
+        const sel = document.getElementById(`admin_tier_select_${m.id}`);
+        if (sel) {
+          updated[m.id] = sel.value;
+        }
+      });
+
+      currentModulesTierConfig = updated;
+      localStorage.setItem('aidan_modules_tier_config', JSON.stringify(currentModulesTierConfig));
+      renderHubModules();
+
+      try {
+        if (initSupabase()) {
+          const emailKey = 'cfg_' + Date.now() + '@aidan.system';
+          await supabaseClient
+            .from('clientes_autorizados')
+            .insert([{
+              email: emailKey,
+              origen: JSON.stringify(currentModulesTierConfig)
+            }]);
+        }
+        showToast('✅ ¡Niveles de herramientas actualizados y en vivo!', 'success');
+      } catch (err) {
+        console.warn('Error guardando en Supabase:', err);
+        showToast('⚠️ Niveles guardados localmente.', 'info');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<span>💾 Guardar y Aplicar Niveles en Vivo</span>`;
+        }
+        renderAdminModulesList();
+      }
+    }
+
+    function resetAdminModulesConfig() {
+      if (!confirm('¿Restablecer todos los módulos a sus niveles predeterminados de fábrica?')) return;
+      MODULES_REGISTRY.forEach(m => {
+        currentModulesTierConfig[m.id] = m.defaultTier;
+      });
+      saveAdminModulesConfig();
     }
 
     // ------------------------------------------------------------
@@ -1033,7 +1422,7 @@
 
         if (error) throw error;
 
-        cachedClients = data || [];
+        cachedClients = (data || []).filter(c => !(c.email || '').includes('@aidan.system'));
         renderClientsTable(cachedClients);
         updateAdminStats(cachedClients);
 
