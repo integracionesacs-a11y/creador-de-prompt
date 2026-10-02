@@ -1013,19 +1013,20 @@
         const queryPromise = supabaseClient
           .from('clientes_autorizados')
           .select('email')
-          .eq('email', email)
-          .single();
+          .ilike('email', email)
+          .limit(1);
 
         const res = await Promise.race([queryPromise, timeoutPromise]);
-        const data = res && res.data;
+        const rows = res && res.data;
+        const client = (Array.isArray(rows) && rows.length > 0) ? rows[0] : (rows && rows.email ? rows : null);
 
-        if (data && data.email) {
+        if (client && client.email) {
           // Desbloqueas la interfaz del creador de prompts
-          localStorage.setItem('aidan_authorized_email', data.email.toLowerCase());
+          localStorage.setItem('aidan_authorized_email', client.email.toLowerCase());
           document.getElementById('login-screen').classList.add('hidden');
           document.getElementById('app-prompts').classList.remove('hidden');
           if (unauthBox) unauthBox.classList.add('hidden');
-          setupUserChip({ email: data.email });
+          setupUserChip({ email: client.email });
         } else {
           // Acceso no autorizado
           if (unauthBox) {
@@ -1081,15 +1082,16 @@
           const queryPromise = supabaseClient
             .from('clientes_autorizados')
             .select('email')
-            .eq('email', savedEmail.trim().toLowerCase())
-            .single();
+            .ilike('email', savedEmail.trim().toLowerCase())
+            .limit(1);
 
           const res = await Promise.race([queryPromise, timeoutPromise]);
-          const data = res && res.data;
+          const rows = res && res.data;
+          const client = (Array.isArray(rows) && rows.length > 0) ? rows[0] : (rows && rows.email ? rows : null);
 
-          if (data && data.email) {
+          if (client && client.email) {
             finishLoading(true);
-            setupUserChip({ email: data.email });
+            setupUserChip({ email: client.email });
             return;
           } else {
             localStorage.removeItem('aidan_authorized_email');
@@ -2258,7 +2260,7 @@
       }
 
       populateCategories();
-      if (!skipPrompt) if (!skipPrompt) autoUpdatePrompt();
+      if (!skipPrompt) autoUpdatePrompt();
     }
 
     // Toggle Checkbox de Categoría
@@ -2287,7 +2289,7 @@
     function onCategorySelectChange(catKey) {
       const catNum = catKey.replace('cat', '');
       userManuallyTouched[catNum] = true;
-      if (!skipPrompt) autoUpdatePrompt();
+      autoUpdatePrompt();
     }
 
     // Actualización automática si ya hay texto
@@ -2419,27 +2421,50 @@
       tokenEstEl.textContent = `~${estTokens} tokens`;
     }
 
-    // Copiar Prompt al Portapapeles
+    // Copiar Prompt al Portapapeles con fallback robusto
     function copyPrompt() {
       const output = document.getElementById('outputBox').innerText;
       const texts = i18n[currentLang];
       if (!output || output.includes(texts.output_placeholder) || output.includes('⚠️')) return;
 
-      navigator.clipboard.writeText(output).then(() => {
+      const finishCopyUI = () => {
         const label = document.getElementById('copyLabel');
         const icon = document.getElementById('copyIcon');
         const btn = document.getElementById('copyBtn');
-        
-        label.textContent = texts.copy_success;
-        icon.textContent = '✅';
-        btn.classList.add('bg-emerald-600');
+        if (label) label.textContent = texts.copy_success;
+        if (icon) icon.textContent = '✅';
+        if (btn) btn.classList.add('bg-emerald-600');
         
         setTimeout(() => {
-          label.textContent = texts.copy_label;
-          icon.textContent = '📋';
-          btn.classList.remove('bg-emerald-600');
+          if (label) label.textContent = texts.copy_label;
+          if (icon) icon.textContent = '📋';
+          if (btn) btn.classList.remove('bg-emerald-600');
         }, 2000);
-      });
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(output).then(finishCopyUI).catch(() => {
+          fallbackCopyText(output, finishCopyUI);
+        });
+      } else {
+        fallbackCopyText(output, finishCopyUI);
+      }
+    }
+
+    function fallbackCopyText(text, cb) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      if (typeof ta.select === 'function') ta.select();
+      try {
+        document.execCommand('copy');
+        if (cb) cb();
+      } catch (e) {
+        console.error('Error fallback copy:', e);
+      }
+      document.body.removeChild(ta);
     }
 
     // Aplicar Presets Profesionales por Objetivo
@@ -2534,14 +2559,11 @@
         bannerDesc.textContent = preset.desc;
       }
 
-      // 7. Generar el prompt UNA SOLA VEZ al final
-      if (currentText) {
-        generatePrompt();
-      } else {
-        const output = document.getElementById('outputBox');
-        output.innerHTML = `<span class="text-cyan-300 font-sans text-xs">✨ Objetivo <strong>${preset.title}</strong> configurado.<br><br>👉 Escribe tu producto, escena o contexto en <strong>"Acción principal"</strong> para ensamblar el prompt.</span>`;
-        actionInput.focus();
+      // 7. Generar el prompt con acción ejemplo si está vacío para respuesta inmediata al clic
+      if (!currentText && preset.exampleAction) {
+        actionInput.value = preset.exampleAction;
       }
+      generatePrompt();
     }
 
     // Cargar ejemplo sugerido para el preset activo

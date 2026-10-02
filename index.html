@@ -736,12 +736,15 @@
         const { data, error } = await supabase
           .from('clientes_autorizados')
           .select('email, origen')
-          .eq('email', savedEmail.trim().toLowerCase())
-          .single();
+          .ilike('email', savedEmail.trim().toLowerCase())
+          .limit(1);
 
-        if (data && data.email) {
-          const tier = determineTierFromRow(data);
-          currentUserSession = { email: data.email, tier };
+        const rows = data || [];
+        const clientData = rows.length > 0 ? rows[0] : null;
+
+        if (clientData && clientData.email) {
+          const tier = determineTierFromRow(clientData);
+          currentUserSession = { email: clientData.email, tier };
           localStorage.setItem('aidan_user_level', tier);
           updateUIForMember(currentUserSession);
         } else {
@@ -792,13 +795,16 @@
         const { data, error } = await supabase
           .from('clientes_autorizados')
           .select('email, origen')
-          .eq('email', email)
-          .single();
+          .ilike('email', email)
+          .limit(1);
 
-        if (data && data.email) {
-          const tier = determineTierFromRow(data);
-          currentUserSession = { email: data.email, tier };
-          localStorage.setItem('aidan_authorized_email', data.email.toLowerCase());
+        const rows = data || [];
+        const clientData = rows.length > 0 ? rows[0] : null;
+
+        if (clientData && clientData.email) {
+          const tier = determineTierFromRow(clientData);
+          currentUserSession = { email: clientData.email, tier };
+          localStorage.setItem('aidan_authorized_email', clientData.email.toLowerCase());
           localStorage.setItem('aidan_user_level', tier);
 
           if (unauthBox) unauthBox.classList.add('hidden');
@@ -871,6 +877,12 @@
     // LANZAMIENTO DE HERRAMIENTAS & CONTROL DE ACCESO
     // ------------------------------------------------------------
     function launchApp(appId, requiredTier) {
+      // El Optimizador de Prompts se abre de inmediato (cuenta con su propia verificación en /prompts/)
+      if (appId === 'prompts') {
+        window.location.href = './prompts/';
+        return;
+      }
+
       if (!currentUserSession) {
         openLoginModal();
         return;
@@ -883,9 +895,7 @@
       }
 
       // Acceso Permitido
-      if (appId === 'prompts') {
-        window.location.href = './prompts/';
-      } else if (appId === 'negocios') {
+      if (appId === 'negocios') {
         showToast('🚀 El módulo Generador de Negocios & Ads se desplegará próximamente en tu Suite VIP', 'info');
       } else {
         showToast('🚀 Este módulo Super VIP se encuentra en calibración final', 'info');
@@ -904,16 +914,16 @@
 
       if (tier === 'all') {
         tabAll.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
-        cards.forEach(c => c.classList.remove('hidden'));
+        cards.forEach(c => { c.style.display = 'flex'; });
       } else if (tier === 'vip') {
         tabVip.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-[#00D2FF] bg-[#00D2FF]/10 text-[#00D2FF] cursor-pointer";
         cards.forEach(c => {
-          c.dataset.tier === 'vip' ? c.classList.remove('hidden') : c.classList.add('hidden');
+          c.style.display = (c.dataset.tier === 'vip') ? 'flex' : 'none';
         });
       } else if (tier === 'super_vip') {
         tabSuper.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-amber-500 bg-amber-500/10 text-amber-300 cursor-pointer";
         cards.forEach(c => {
-          c.dataset.tier === 'super_vip' ? c.classList.remove('hidden') : c.classList.add('hidden');
+          c.style.display = (c.dataset.tier === 'super_vip') ? 'flex' : 'none';
         });
       }
     }
