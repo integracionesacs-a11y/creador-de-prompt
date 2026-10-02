@@ -1,19 +1,36 @@
 # ============================================================
-# Script de Despliegue Rápido (PowerShell) - A\DAN SOLUTIONS
+# Script de Despliegue Rapido (PowerShell) - A\DAN SOLUTIONS
 # ============================================================
 
-Write-Host "🚀 Sincronizando con GitHub..." -ForegroundColor Cyan
+Write-Host "🚀 [1/3] Preparando cambios locales..." -ForegroundColor Cyan
+git add .
+$status = git status --porcelain
+if ($status) {
+    git commit -m "update web: sincronizacion Suite A\DAN"
+}
+
+Write-Host "📤 [2/3] Sincronizando con GitHub (origin/main)..." -ForegroundColor Cyan
 git push origin main
 
 Write-Host ""
-Write-Host "📦 Desplegando archivos a producción en Netlify..." -ForegroundColor Cyan
-npx -y netlify-cli deploy --prod --dir=.
+Write-Host "📦 [3/3] Desplegando en vivo a Netlify..." -ForegroundColor Cyan
+npx --yes netlify-cli deploy --prod --dir=. --site creador-de-prompts-aidan
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
-    Write-Host "✅ ¡Web actualizada con éxito en producción!" -ForegroundColor Green
+    Write-Host "==========================================================" -ForegroundColor Green
+    Write-Host "✅ ¡WEB EN PRODUCCION ACTUALIZADA CON EXITO!" -ForegroundColor Green
     Write-Host "🌐 URL en vivo: https://creador-de-prompts-aidan.netlify.app" -ForegroundColor Cyan
+    Write-Host "==========================================================" -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "ℹ️ Si te pide autenticación en Netlify, ejecuta primero: npx netlify login" -ForegroundColor Yellow
+    Write-Host "==========================================================" -ForegroundColor Yellow
+    Write-Host "⚠️ ATENCION: Requiere autorizacion unica de Netlify en tu PC." -ForegroundColor Yellow
+    Write-Host "Para conectar tu cuenta de Netlify de forma interactiva:" -ForegroundColor White
+    Write-Host "👉 Ejecuta en tu terminal de VS Code / PowerShell:" -ForegroundColor White
+    Write-Host "   npx netlify-cli login" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Se abrira tu navegador para presionar 'Authorize'." -ForegroundColor White
+    Write-Host "Despues de eso, vuelve a ejecutar .\actualizar_web.ps1" -ForegroundColor White
+    Write-Host "==========================================================" -ForegroundColor Yellow
 }
