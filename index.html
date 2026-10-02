@@ -703,16 +703,16 @@
     const SUPABASE_ANON_KEY = "sb_publishable_ss912_3auC3LVUA6lBpY6A_Kz6J4z_c";
     const ADMIN_PIN = "9835$$";
 
-    let supabase = null;
+    let supabaseClient = null;
     let currentUserSession = null; // { email: '', tier: 'vip' | 'super_vip' }
     let cachedClients = [];
 
     // Inicializar Supabase
     function initSupabase() {
-      if (!supabase && window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      if (!supabaseClient && window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       }
-      return !!supabase;
+      return !!supabaseClient;
     }
 
     // Inicializar la aplicación
@@ -737,7 +737,7 @@
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('clientes_autorizados')
           .select('email, origen')
           .ilike('email', savedEmail.trim().toLowerCase())
@@ -796,7 +796,7 @@
       btn.innerHTML = `<span class="animate-spin">🔄</span> Verificando membresía...`;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('clientes_autorizados')
           .select('email, origen')
           .ilike('email', email)
@@ -1026,7 +1026,7 @@
       tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 font-mono">Consultando base de datos...</td></tr>`;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('clientes_autorizados')
           .select('*')
           .order('id', { ascending: false });
@@ -1136,7 +1136,7 @@
 
       try {
         const origenVal = tier === 'super_vip' ? 'super_vip_manual' : 'vip_pro_manual';
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('clientes_autorizados')
           .insert([{ email, origen: origenVal }]);
 
@@ -1166,7 +1166,7 @@
       const targetOrigen = newTier === 'super_vip' ? 'super_vip_migrado' : 'vip_pro_standard';
 
       try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('clientes_autorizados')
           .update({ origen: targetOrigen })
           .eq('email', email);
@@ -1192,7 +1192,7 @@
       if (!initSupabase()) return;
 
       try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('clientes_autorizados')
           .delete()
           .eq('email', email);
