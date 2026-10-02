@@ -603,7 +603,7 @@
           <span>👥</span> Gestión de Clientes
         </button>
         <button id="admin_tab_modules_btn" onclick="switchAdminTab('modules')" class="px-4 py-2 rounded-xl text-xs font-bold transition border border-[#232D42] bg-[#161D2F] text-slate-400 hover:text-white cursor-pointer flex items-center gap-2">
-          <span>🎛️</span> Control de Módulos & Promociones
+          <span>🎛️</span> Control de Módulos & Niveles
         </button>
       </div>
 
@@ -697,17 +697,17 @@
         </div>
       </div>
 
-      <!-- VISTA 2: GESTIÓN DE MÓDULOS & PROMOCIONES -->
+      <!-- VISTA 2: GESTIÓN DE MÓDULOS & NIVELES -->
       <div id="admin_view_modules" style="display: none;" class="flex-1 flex flex-col overflow-hidden">
         <!-- Banner Informativo -->
         <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-amber-500/30 mb-3 flex items-start gap-3 shrink-0">
           <span class="text-xl">🎛️</span>
           <div>
             <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-1">
-              Control de Accesos & Promociones por Tiempo Limitado
+              Control de Niveles de Acceso (VIP PRO vs SUPER VIP)
             </h4>
             <p class="text-[11px] text-slate-300 leading-relaxed">
-              Aquí puedes cambiar el nivel de cualquier herramienta en tiempo real. Por ejemplo: si lanzas una promoción especial por una semana para soltar una herramienta <strong class="text-amber-300">SUPER VIP</strong> a miembros <strong class="text-[#00D2FF]">VIP PRO</strong> (por un costo de 5 soles), cámbiala abajo y presiona <strong class="text-white">Guardar</strong>. Al finalizar tu promoción, regrésala a SUPER VIP con un solo clic.
+              Aquí puedes alternar el nivel de cualquier herramienta en tiempo real entre <strong class="text-amber-300">SUPER VIP</strong> y <strong class="text-[#00D2FF]">VIP PRO</strong>. Por ejemplo: si lanzas una promoción especial por una semana para abrir una herramienta SUPER VIP a miembros VIP PRO (por 5 soles), cámbiala a VIP PRO y presiona <strong class="text-white">Guardar</strong>. Al finalizar la promoción, regrésala a SUPER VIP con un solo clic.
             </p>
           </div>
         </div>
@@ -884,7 +884,7 @@
       const filtered = MODULES_REGISTRY.filter(m => {
         const modTier = currentModulesTierConfig[m.id] || m.defaultTier;
         if (currentFilterTier === 'all') return true;
-        if (currentFilterTier === 'vip') return modTier === 'vip' || modTier === 'public';
+        if (currentFilterTier === 'vip') return modTier === 'vip';
         if (currentFilterTier === 'super_vip') return modTier === 'super_vip';
         return true;
       });
@@ -892,7 +892,6 @@
       grid.innerHTML = filtered.map(m => {
         const modTier = currentModulesTierConfig[m.id] || m.defaultTier;
         const isSuper = modTier === 'super_vip';
-        const isPublic = modTier === 'public';
 
         let cardBorder, glowClass, badgeHtml, btnClass, footerStatusHtml, btnLabel;
 
@@ -912,21 +911,6 @@
           const canAccess = userTier === 'super_vip';
           btnLabel = canAccess ? 'Abrir Aplicativo' : 'Acceder / Migrar';
           btnClass = 'gradient-btn-gold text-slate-950 font-bold text-xs shadow-glow-gold';
-        } else if (isPublic) {
-          cardBorder = 'border-emerald-500/40 hover:shadow-[0_0_25px_rgba(16,185,129,0.25)]';
-          glowClass = 'bg-gradient-to-b from-[#161D2F] to-[#0B0F19]';
-          badgeHtml = `
-            <span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-sm animate-pulse">
-              <span>🌐</span> ACCESO LIBRE / PROMO
-            </span>
-          `;
-          footerStatusHtml = `
-            <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
-              <span>✨</span> Promoción Disponible
-            </span>
-          `;
-          btnLabel = 'Abrir Aplicativo';
-          btnClass = 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow';
         } else {
           // VIP PRO
           cardBorder = 'border-[#232D42] hover:shadow-glow-cyan';
@@ -945,18 +929,19 @@
               <span>⚡</span> Incluido en membresía
             </span>
           `;
-          btnLabel = 'Abrir Aplicativo';
+          const canAccess = userTier === 'vip' || userTier === 'super_vip';
+          btnLabel = canAccess ? 'Abrir Aplicativo' : 'Identificarse';
           btnClass = 'gradient-btn-primary text-[#0B0F19] font-bold text-xs shadow';
         }
 
-        const tagsHtml = m.tags.map(t => `<span class="px-2 py-0.5 rounded bg-[#0B0F19] border ${isSuper ? 'border-amber-900/40 text-amber-200' : isPublic ? 'border-emerald-900/40 text-emerald-200' : 'border-[#232D42] text-slate-400'}">${t}</span>`).join('');
+        const tagsHtml = m.tags.map(t => `<span class="px-2 py-0.5 rounded bg-[#0B0F19] border ${isSuper ? 'border-amber-900/40 text-amber-200' : 'border-[#232D42] text-slate-400'}">${t}</span>`).join('');
 
-        const lockIcon = (isSuper && userTier !== 'super_vip') || (!isPublic && userTier === 'anonymous') ? '<span class="text-xs">🔒</span>' : '';
+        const lockIcon = (isSuper && userTier !== 'super_vip') || (userTier === 'anonymous') ? '<span class="text-xs">🔒</span>' : '';
 
         return `
           <div class="module-card glass-card rounded-2xl p-6 flex flex-col justify-between border ${cardBorder} transition duration-300 relative group ${glowClass}" data-tier="${modTier}">
             <div class="flex items-start justify-between gap-4 mb-4">
-              <div class="w-12 h-12 rounded-xl ${isSuper ? 'bg-gradient-to-br from-amber-600 via-yellow-500 to-amber-700 text-slate-900 shadow-glow-gold' : isPublic ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-glow-cyan'} flex items-center justify-center text-2xl font-bold">
+              <div class="w-12 h-12 rounded-xl ${isSuper ? 'bg-gradient-to-br from-amber-600 via-yellow-500 to-amber-700 text-slate-900 shadow-glow-gold' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-glow-cyan'} flex items-center justify-center text-2xl font-bold">
                 ${m.icon}
               </div>
               ${badgeHtml}
@@ -964,7 +949,7 @@
 
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="text-lg sm:text-xl font-bold text-white font-display ${isSuper ? 'group-hover:text-amber-300' : isPublic ? 'group-hover:text-emerald-300' : 'group-hover:text-[#00D2FF]'} transition">
+                <h3 class="text-lg sm:text-xl font-bold text-white font-display ${isSuper ? 'group-hover:text-amber-300' : 'group-hover:text-[#00D2FF]'} transition">
                   ${m.name}
                 </h3>
                 ${lockIcon}
@@ -978,7 +963,7 @@
               </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t ${isSuper ? 'border-amber-900/40' : isPublic ? 'border-emerald-900/40' : 'border-[#232D42]'} flex items-center justify-between">
+            <div class="mt-6 pt-4 border-t ${isSuper ? 'border-amber-900/40' : 'border-[#232D42]'} flex items-center justify-between">
               ${footerStatusHtml}
               <button onclick="launchApp('${m.id}')" class="px-4 py-2 rounded-xl ${btnClass} flex items-center gap-1.5 cursor-pointer transition">
                 <span>${btnLabel}</span>
@@ -1163,29 +1148,19 @@
       const mod = MODULES_REGISTRY.find(m => m.id === appId);
       const modTier = currentModulesTierConfig[appId] || (mod ? mod.defaultTier : 'vip');
 
-      // 1. Si el módulo está liberado en acceso PÚBLICO:
-      if (modTier === 'public') {
-        if (mod && mod.url) {
-          window.location.href = mod.url;
-        } else {
-          showToast(`🚀 Abriendo ${mod ? mod.name : 'herramienta'} (Promoción pública activa)`, 'success');
-        }
-        return;
-      }
-
-      // 2. Si no es público y no hay usuario autenticado:
+      // 1. Si no hay usuario autenticado, SIEMPRE exigir inicio de sesión de miembro:
       if (!currentUserSession) {
         openLoginModal();
         return;
       }
 
-      // 3. Si el módulo está en SUPER VIP y el usuario solo es VIP:
+      // 2. Si el módulo requiere SUPER VIP y el usuario solo tiene VIP PRO:
       if (modTier === 'super_vip' && currentUserSession.tier !== 'super_vip') {
         openUpgradeModal(appId);
         return;
       }
 
-      // 4. Acceso Permitido
+      // 3. Acceso Permitido (VIP o SUPER VIP):
       if (mod && mod.url) {
         window.location.href = mod.url;
       } else if (appId === 'negocios') {
@@ -1346,9 +1321,8 @@
             <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
               <label class="text-[10px] uppercase font-mono text-slate-400 hidden sm:inline">Nivel Activo:</label>
               <select id="admin_tier_select_${m.id}" class="bg-[#0B0F19] border border-amber-500/50 rounded-xl py-1.5 px-3 text-xs text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-400 cursor-pointer">
-                <option value="super_vip" ${currentTier === 'super_vip' ? 'selected' : ''}>👑 SUPER VIP (Solo Super VIP)</option>
-                <option value="vip" ${currentTier === 'vip' ? 'selected' : ''}>💎 VIP PRO (Abierto a VIP)</option>
-                <option value="public" ${currentTier === 'public' ? 'selected' : ''}>🌐 PÚBLICO (Acceso Libre)</option>
+                <option value="super_vip" ${currentTier === 'super_vip' ? 'selected' : ''}>👑 SUPER VIP</option>
+                <option value="vip" ${currentTier === 'vip' ? 'selected' : ''}>💎 VIP PRO</option>
               </select>
             </div>
           </div>
