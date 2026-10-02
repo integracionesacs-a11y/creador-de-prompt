@@ -1,4 +1,12 @@
 {
+  "name": "adan-ai-suite",
+  "version": "1.0.0",
+  "description": "A\\DAN SOLUTIONS — AI Suite & Hub de Aplicaciones",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "dependencies": {
     "puppeteer-core": "^25.12.0"
   }
