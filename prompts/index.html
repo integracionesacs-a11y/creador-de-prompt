@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimizador de Prompts | A\DAN SOLUT\ONS - Omni Flash 1.1 & Nano Banana 2</title>
+  
+  <!-- Tipografías de Marca: Space Grotesk, Inter, JetBrains Mono (Optimizadas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0B0F19',
+              surface: '#161D2F',
+              card: '#121826',
+              border: '#232D42',
+              cyan: '#00D2FF',
+              blue: '#0051FF',
+              text: '#FFFFFF',
+              muted: '#94A3B8'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 25px -4px rgba(0, 210, 255, 0.45)',
+            'glow-blue': '0 0 30px -4px rgba(0, 81, 255, 0.5)',
+            'card': '0 8px 30px -6px rgba(0, 0, 0, 0.6)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0B0F19;
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    h1, h2, h3, h4, .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B0F19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #232D42;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00D2FF;
+    }
+
+    /* Radial gradient glows */
+    .bg-radial-gradient {
+      background: radial-gradient(circle at 50% 0%, rgba(0, 81, 255, 0.18) 0%, rgba(0, 210, 255, 0.05) 35%, transparent 70%);
+    }
+
+    .glass-card {
+      background: rgba(22, 29, 47, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid #232D42;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 210, 255, 0.4);
+    }
+
+    .gradient-btn-primary {
+      background: linear-gradient(135deg, #0051FF 0%, #00D2FF 100%);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .gradient-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 25px -2px rgba(0, 210, 255, 0.6);
+    }
+    .gradient-btn-primary:active {
+      transform: translateY(0);
+      opacity: 0.95;
+    }
+
+    /* Active category border pulse */
+    .cat-card-active {
+      border-color: rgba(0, 210, 255, 0.6) !important;
+      background: rgba(22, 29, 47, 0.95) !important;
+      box-shadow: 0 0 20px -5px rgba(0, 210, 255, 0.25);
+    }
+
+    /* Active preset card highlight */
+    .preset-card-active {
+      border-color: #00D2FF !important;
+      background: rgba(0, 210, 255, 0.08) !important;
+      box-shadow: 0 0 15px -3px rgba(0, 210, 255, 0.3) !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#0B0F19] text-slate-100 selection:bg-[#00D2FF] selection:text-[#0B0F19] relative">
+
+  <!-- Glow ambiental de fondo -->
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-radial-gradient pointer-events-none z-0"></div>
+
+  <!-- ============================================================ -->
+  <!-- 1. PANTALLA DE CARGA / VERIFICACIÓN DE SESIÓN                -->
+  <!-- ============================================================ -->
+  <div id="auth-loading" class="min-h-screen flex flex-col items-center justify-center p-4 relative z-50 bg-[#0B0F19]">
+    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0051FF] to-[#00D2FF] flex items-center justify-center shadow-glow-cyan text-[#0B0F19] text-2xl font-black mb-6">
+      ⚡
+    </div>
+    <div class="w-10 h-10 rounded-full border-3 border-[#00D2FF]/20 border-t-[#00D2FF] animate-spin"></div>
+    <p class="mt-4 text-xs font-mono text-[#00D2FF] tracking-wider animate-pulse">
+      Verificando suscripción activa en Google AI Pro...
+    </p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. PANTALLA DE LOGIN / BLOQUEO (ACCESO RESTRINGIDO)         -->
+  <!-- ============================================================ -->
+  <div id="login-screen" class="hidden min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-40 bg-[#0B0F19]">
+    
+    <div class="glass-card rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-card border border-[#232D42] text-center relative z-10">
+      
+      <!-- Brand Icon -->
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0051FF] to-[#00D2FF] flex items-center justify-center mx-auto shadow-glow-cyan text-[#0B0F19] text-2xl font-black mb-4">
+        ⚡
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-[#00D2FF]/40 text-[#00D2FF] text-[10px] font-mono uppercase tracking-wider mb-2">
+        🔒 ACCESO EXCLUSIVO • CLIENTES AUTORIZADOS
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-bold text-white font-display">
+        OPTIMIZADOR DE PROMPTS
+      </h2>
+      <p class="text-xs text-[#94A3B8] mt-2 leading-relaxed">
+        Suite de dirección de <strong class="text-white">Gemini Omni Flash 1.1</strong> y <strong class="text-white">Nano Banana 2</strong>. Ingresa el correo con el que adquiriste tu suscripción activa de Google AI Pro para validar tu acceso en la base de datos.
+      </p>
+
+      <!-- Input de Verificación Directa de Correo de Comprador -->
+      <div class="mt-6 text-left">
+        <label for="input_buyer_email" class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
+          <span>Correo de Comprador</span>
+          <span class="text-[10px] text-[#00D2FF] font-mono">Google AI Pro 5TB</span>
+        </label>
+        <div class="relative">
+          <input 
+            type="email" 
+            id="input_buyer_email" 
+            placeholder="tu-correo@gmail.com" 
+            onkeydown="if(event.key === 'Enter') verifyBuyerEmail()"
+            class="w-full bg-[#0B0F19] border border-[#232D42] rounded-xl py-3 px-3.5 pl-10 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#00D2FF] transition shadow-inner font-mono"
+          >
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">✉️</span>
+        </div>
+        <p class="mt-1.5 text-[10px] text-slate-400 leading-tight">
+          Ingresa el correo registrado automáticamente en la tabla de compradores al activar tus 5TB.
+        </p>
+
+        <button 
+          onclick="verifyBuyerEmail()" 
+          id="btn_verify_email" 
+          class="w-full mt-4 py-3.5 px-5 rounded-xl gradient-btn-primary text-[#0B0F19] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-glow-cyan active:scale-[0.99] cursor-pointer"
+        >
+          <span>⚡ Validar y Desbloquear Acceso</span>
+        </button>
+      </div>
+
+      <!-- Alerta No Autorizado -->
+      <div id="unauthorized-box" class="hidden mt-5 p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-rose-950/80 to-[#121826] border border-rose-800/80 text-left text-xs text-rose-200 shadow-xl">
+        <div class="flex items-center gap-2 font-bold text-rose-300">
+          <span class="text-base">⚠️</span> <span>Acceso no autorizado</span>
+        </div>
+        <p class="mt-1.5 text-slate-300 text-[11px] leading-relaxed">
+          El correo <strong id="unauthorized-email" class="text-white"></strong> no cuenta con una suscripción activa de <strong class="text-white">Google AI Pro</strong> en la base de datos de compradores.
+        </p>
+
+        <!-- Botón Directo a WhatsApp para Adquirir Membresía -->
+        <a id="btn_acquire_membership" 
+          href="https://wa.me/51985332135?text=Hola%20A%5CDAN%20SOLUTIONS%2C%20me%20interesa%20adquirir%20la%20membresia%20de%20Google%20AI%20Pro%2C%20puedes%20brindarme%20mayor%20informaci%C3%B3n%3F" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="mt-3.5 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/60 cursor-pointer group active:scale-[0.99]">
+          <span class="text-base group-hover:scale-110 transition">💬</span>
+          <span>Adquirir Membresía Google AI Pro</span>
+          <span class="font-mono text-emerald-100 text-xs ml-0.5 group-hover:translate-x-0.5 transition">&rarr;</span>
+        </a>
+
+        <div class="mt-3 pt-2.5 border-t border-rose-900/60 flex items-center justify-between">
+          <button type="button" onclick="signOutAndRetry()" class="text-[11px] text-slate-400 hover:text-white underline cursor-pointer">
+            ← Probar con otro correo
+          </button>
+          <span class="text-[10px] text-slate-400 font-mono">
+            A\DAN SOLUTIONS
+          </span>
+        </div>
+      </div>
+
+      <!-- Nota de Seguridad y Configuración -->
+      <div class="mt-6 pt-4 border-t border-[#232D42] text-[11px] text-slate-500 flex items-center justify-between">
+        <span class="flex items-center gap-1">
+          <span>🔒</span> Verificación Supabase DB
+        </span>
+        <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-[#00D2FF] underline text-[10px]">
+          ⚙️ Ajustes de API
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. INTERFAZ COMPLETA DEL OPTIMIZADOR (APP-PROMPTS)          -->
+  <!-- ============================================================ -->
+  <div id="app-prompts" class="hidden">
+
+    <!-- ============================================================ -->
+    <!-- BARRA SUPERIOR / HEADER                                      -->
+    <!-- ============================================================ -->
+    <header class="border-b border-[#232D42] bg-[#0B0F19]/90 backdrop-blur-xl sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-3.5 sm:px-6 flex flex-wrap items-center justify-between gap-3 relative z-10">
+        
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0051FF] to-[#00D2FF] flex items-center justify-center shadow-glow-cyan text-[#0B0F19] font-black text-lg">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-xl font-bold tracking-tight text-white font-display">
+                OPTIMIZADOR DE PROMPTS
+              </h1>
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/40">
+                A\DAN SOLUT\ONS
+              </span>
+            </div>
+            <p id="ui_subtitle" class="text-[11px] text-[#00D2FF] font-medium tracking-wide">
+              Omni Flash 1.1 & Nano Banana 2 • Google AI Studio
+            </p>
+          </div>
+        </div>
+
+        <!-- Controls: Hub Link, User Chip, Language & Reset -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Back to Hub Link -->
+          <a href="../" title="Volver al Hub de A\DAN SOLUTIONS" class="text-xs px-3 py-1.5 rounded-xl border border-[#232D42] bg-[#161D2F]/80 hover:bg-[#161D2F] hover:border-[#00D2FF]/50 text-slate-300 hover:text-white transition flex items-center gap-1.5 font-mono">
+            <span>←</span> <span class="hidden sm:inline">Hub A\DAN</span>
+          </a>
+
+          <!-- User Profile Chip (Autenticado) -->
+          <div id="user_profile_chip" class="flex items-center gap-2 bg-[#161D2F] border border-[#232D42] rounded-xl px-2.5 py-1.5 shadow-inner">
+            <div id="user_avatar" class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#0051FF] to-[#00D2FF] text-[#0B0F19] font-bold text-[10px] flex items-center justify-center">
+              U
+            </div>
+            <div class="hidden sm:block text-left text-[11px] leading-tight max-w-[140px] truncate">
+              <span id="user_email_display" class="font-bold text-white truncate block">usuario@correo.com</span>
+              <span class="text-[9px] text-[#00D2FF] font-mono">Google AI Pro ✅</span>
+            </div>
+            <button onclick="signOutUser()" title="Cerrar sesión" class="text-slate-400 hover:text-rose-400 text-xs ml-1 transition">
+              🚪
+            </button>
+          </div>
+
+          <!-- Language selector -->
+          <div class="flex items-center gap-1.5 bg-[#161D2F] border border-[#232D42] rounded-xl px-2.5 py-1.5 shadow-inner">
+            <span class="text-xs">🌐</span>
+            <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer">
+              <option value="es" selected class="bg-[#161D2F] text-white">Español</option>
+              <option value="en" class="bg-[#161D2F] text-white">English</option>
+              <option value="pt" class="bg-[#161D2F] text-white">Português</option>
+            </select>
+          </div>
+
+          <!-- Reset Button -->
+          <button onclick="resetAll()" id="ui_btn_reset" class="text-xs px-3 py-1.5 rounded-xl border border-[#232D42] bg-[#161D2F]/70 hover:bg-[#161D2F] hover:border-[#00D2FF]/50 text-slate-300 hover:text-white transition flex items-center gap-1.5">
+            <span>🔄</span>
+            <span>Restablecer</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- CONTENIDO PRINCIPAL                                          -->
+    <!-- ============================================================ -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10">
+
+      <!-- ============================================================ -->
+      <!-- HUB DE CONFIGURACIONES TÉCNICAS POR OBJETIVO (PRESETS)        -->
+      <!-- ============================================================ -->
+      <div class="mb-6 glass-card rounded-2xl p-4 sm:p-5 shadow-card border border-[#232D42]">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#00D2FF] font-mono flex items-center gap-1.5">
+              <span>🎯</span> CONFIGURACIONES POR OBJETIVO
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#161D2F] text-slate-300 border border-[#232D42]">
+              Se suman automáticamente a tu contexto
+            </span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span class="inline-flex items-center gap-1 text-[#00D2FF] font-mono text-[10px]">
+              <span class="w-2 h-2 rounded-full bg-[#00D2FF]"></span> 📸 = Nano Banana 2 (Foto 4K)
+            </span>
+            <span class="inline-flex items-center gap-1 text-indigo-400 font-mono text-[10px]">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 🎬 = Omni Flash 1.1 (Video + Audio)
+            </span>
+          </div>
+        </div>
+        <p class="text-xs text-[#94A3B8] mb-3">
+          Elige tu objetivo. La herramienta calibrará la cámara, óptica, iluminación y relación de aspecto ideales, <strong class="text-white">sumándolos a lo que escribas en Acción Principal</strong>.
+        </p>
+
+        <!-- Grid de Presets Estratégicos -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+          
+          <!-- 1. Producto Estudio (Foto E-commerce) -->
+          <button onclick="applyPreset('product_image', true)" id="btn_preset_product_image" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-[#00D2FF] hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🛍️</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/30">📸 FOTO 1:1</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-[#00D2FF] transition font-display">Producto E-comm</div>
+            <p class="text-[10px] text-slate-400 truncate">Macro, luz difusa, textura 4K</p>
+          </button>
+
+          <!-- 2. Producto Estudio (Video Ads 360) -->
+          <button onclick="applyPreset('product_video', true)" id="btn_preset_product_video" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-indigo-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🛍️</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-500/30">🎬 VIDEO 9:16</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-indigo-300 transition font-display">Video Ads 360°</div>
+            <p class="text-[10px] text-slate-400 truncate">Órbita 360, foley HD, TikTok</p>
+          </button>
+
+          <!-- 3. Vista Aérea Dron (Foto Cenital) -->
+          <button onclick="applyPreset('drone_image', true)" id="btn_preset_drone_image" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-[#00D2FF] hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🦅</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/30">📸 FOTO 16:9</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-[#00D2FF] transition font-display">Dron Cenital 90°</div>
+            <p class="text-[10px] text-slate-400 truncate">Top-down, 16mm, Golden Hour</p>
+          </button>
+
+          <!-- 4. Vista Aérea Dron (Video Vuelo) -->
+          <button onclick="applyPreset('drone_video', true)" id="btn_preset_drone_video" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-indigo-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🦅</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-500/30">🎬 VIDEO 16:9</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-indigo-300 transition font-display">Vuelo Dron Pro</div>
+            <p class="text-[10px] text-slate-400 truncate">Tracking forward, audio viento</p>
+          </button>
+
+          <!-- 5. Creador UGC / Viral Ads -->
+          <button onclick="applyPreset('ugc_creator', true)" id="btn_preset_ugc_creator" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-indigo-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">📱</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-500/30">🎬 VIDEO 9:16</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-indigo-300 transition font-display">Creador UGC Viral</div>
+            <p class="text-[10px] text-slate-400 truncate">Hablando a cámara, mano alzada</p>
+          </button>
+
+          <!-- 6. Gastronomía / Food Porn -->
+          <button onclick="applyPreset('food_porn', true)" id="btn_preset_food_porn" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-amber-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🍽️</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/30">🎬 VIDEO 9:16</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-amber-300 transition font-display">Food Porn Gourmet</div>
+            <p class="text-[10px] text-slate-400 truncate">Push In, vapor, foley cocina</p>
+          </button>
+
+          <!-- 7. Marca Personal / Retrato -->
+          <button onclick="applyPreset('executive_portrait', true)" id="btn_preset_executive_portrait" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-[#00D2FF] hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">👔</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/30">📸 FOTO 4:5</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-[#00D2FF] transition font-display">Retrato Ejecutivo</div>
+            <p class="text-[10px] text-slate-400 truncate">85mm bokeh, estudio corporativo</p>
+          </button>
+
+          <!-- 8. Cine Hollywood 35mm -->
+          <button onclick="applyPreset('hollywood', true)" id="btn_preset_hollywood" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-purple-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🎬</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-500/30">🎬 VIDEO 21:9</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-purple-300 transition font-display">Cine 35mm Scope</div>
+            <p class="text-[10px] text-slate-400 truncate">Anamórfico, claroscuro, Kodak</p>
+          </button>
+
+          <!-- 9. Cyberpunk Neón Dark Tech -->
+          <button onclick="applyPreset('cyberpunk', true)" id="btn_preset_cyberpunk" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-cyan-500 hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">🏙️</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-[#00D2FF] border border-[#00D2FF]/30">🎬 VIDEO 16:9</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-[#00D2FF] transition font-display">Cyberpunk Neón</div>
+            <p class="text-[10px] text-slate-400 truncate">Órbita 360, lluvia ácida, humo</p>
+          </button>
+
+          <!-- 10. Automatización Tech (A\DAN Style) -->
+          <button onclick="applyPreset('aidan_tech', true)" id="btn_preset_aidan_tech" class="preset-card group text-left p-3 rounded-xl bg-[#0B0F19]/90 border border-[#232D42] hover:border-[#00D2FF] hover:bg-[#161D2F] transition">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">⚡</span>
+              <span class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-blue-950/80 text-[#00D2FF] border border-[#00D2FF]/30">🎬 VIDEO 16:9</span>
+            </div>
+            <div class="mt-1.5 font-bold text-xs text-white group-hover:text-[#00D2FF] transition font-display">Caos a Control Tech</div>
+            <p class="text-[10px] text-slate-400 truncate">Transformación digital & IA</p>
+          </button>
+
+        </div>
+
+        <!-- Banner de Estrategia del Preset Seleccionado -->
+        <div id="preset_info_banner" class="hidden mt-3.5 pt-3 border-t border-[#232D42] flex items-start gap-2.5 text-xs">
+          <span class="text-base text-[#00D2FF]">💡</span>
+          <div class="flex-1">
+            <span class="font-bold text-white font-display" id="preset_info_title">Estrategia del Preset:</span>
+            <span id="preset_info_desc" class="text-slate-300 ml-1 leading-relaxed"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SELECTOR DE FORMATO (Video vs Imagen) + ASPECT RATIO -->
+      <div class="mb-6 glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-card">
+        
+        <!-- Label / Motor info -->
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="ui_target_label" class="text-sm font-bold text-white font-display">¿Qué deseas crear?</span>
+            <span id="badge_engine" class="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-950/80 text-[#00D2FF] border border-[#0051FF]/40 font-mono">
+              Gemini Omni Flash 1.1 (Video)
+            </span>
+          </div>
+          <p id="ui_target_badge" class="text-xs text-[#94A3B8] mt-1">
+            Ajusta automáticamente las directivas cinematográficas y acústicas.
+          </p>
+        </div>
+
+        <!-- Mode Switch Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <div class="grid grid-cols-2 gap-2 w-full sm:w-auto">
+            <button type="button" id="btn_mode_video" onclick="setMediaType('video')" 
+              class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 gradient-btn-primary text-[#0B0F19] shadow-glow-cyan">
+              <span>🎬</span> <span id="ui_mode_video">Video (Omni Flash 1.1)</span>
+            </button>
+            <button type="button" id="btn_mode_image" onclick="setMediaType('image')" 
+              class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 bg-[#0B0F19] border border-[#232D42] text-[#94A3B8] hover:text-white hover:border-[#00D2FF]/50">
+              <span>📸</span> <span id="ui_mode_image">Imagen (Nano Banana 2)</span>
+            </button>
+          </div>
+
+          <!-- Aspect Ratio Quick Select -->
+          <div class="flex items-center gap-1.5 bg-[#0B0F19] border border-[#232D42] rounded-xl px-2.5 py-1.5">
+            <span class="text-xs text-[#94A3B8]">📐</span>
+            <select id="aspectRatioSelect" onchange="autoUpdatePrompt()" class="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer">
+              <option value="16:9" selected class="bg-[#161D2F]">16:9 (Horizontal / Cine)</option>
+              <option value="9:16" class="bg-[#161D2F]">9:16 (Reels / TikTok)</option>
+              <option value="1:1" class="bg-[#161D2F]">1:1 (Cuadrado / E-comm)</option>
+              <option value="21:9" class="bg-[#161D2F]">21:9 (Scope Cinemático)</option>
+              <option value="4:5" class="bg-[#161D2F]">4:5 (Instagram Feed)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- GRID PRINCIPAL DE 2 COLUMNAS (Formulario 7 cols / Salida 5 cols) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        
+        <!-- ======================================================== -->
+        <!-- COLUMNA IZQUIERDA: Formulario y Categorías (7 cols)       -->
+        <!-- ======================================================== -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Acción Principal -->
+          <div class="glass-card rounded-2xl p-4 sm:p-5 shadow-card group focus-within:border-[#00D2FF] transition">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label for="mainAction" id="ui_action_label" class="text-xs sm:text-sm font-bold text-white flex items-center gap-2 font-display">
+                <span class="flex h-2 w-2 rounded-full bg-[#00D2FF] animate-pulse"></span>
+                Acción principal / ¿Qué sucede en la escena?
+              </label>
+              <div class="flex items-center gap-2">
+                <!-- Toggle de Auto-Director Inteligente -->
+                <button type="button" id="btn_toggle_autodirector" onclick="toggleAutoDirector()" 
+                  class="text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border border-[#00D2FF]/40 bg-cyan-950/60 text-[#00D2FF] font-mono flex items-center gap-1.5 transition hover:bg-cyan-900/60 cursor-pointer shadow-sm"
+                  title="Auto-selecciona la mejor configuración cinemática según lo que escribes">
+                  <span id="autodirector_icon">✨</span> 
+                  <span id="autodirector_status_text">Auto-Director: ON</span>
+                </button>
+                <button type="button" id="btn_load_example" onclick="loadPresetExample()" class="hidden text-[11px] text-[#00D2FF] hover:underline flex items-center gap-1 font-mono transition">
+                  <span>💡</span> <span>Cargar ejemplo sugerido</span>
+                </button>
+                <span id="ui_required" class="text-[10px] font-semibold text-rose-400 uppercase tracking-wider bg-rose-950/40 px-2 py-0.5 rounded border border-rose-800/40">
+                  Tu contexto
+                </span>
+              </div>
+            </div>
+
+            <!-- Banner de Detección en Tiempo Real del Auto-Director -->
+            <div id="autodirector_detection_badge" class="hidden mb-2.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-950/80 via-[#161D2F] to-[#0B0F19] border border-[#00D2FF]/40 text-xs text-slate-200 flex items-center justify-between gap-2 shadow-inner">
+              <div class="flex items-center gap-2 truncate">
+                <span id="autodirector_badge_icon" class="text-base text-[#00D2FF]">🎬</span>
+                <div class="truncate">
+                  <span id="autodirector_badge_theme" class="font-bold text-white"></span>
+                  <span id="autodirector_badge_desc" class="text-[11px] text-slate-400 ml-1 hidden md:inline"></span>
+                </div>
+              </div>
+              <span class="text-[9px] uppercase tracking-wider font-mono text-[#00D2FF] bg-[#00D2FF]/10 border border-[#00D2FF]/30 px-2 py-0.5 rounded-full shrink-0">
+                Auto-Configurado ✨
+              </span>
+            </div>
+
+            <!-- Tag de objetivo activo (presets superiores) -->
+            <div id="active_objective_tag" class="hidden mb-2.5 px-3 py-1.5 rounded-lg bg-[#00D2FF]/10 border border-[#00D2FF]/30 text-xs text-slate-300 flex items-center justify-between">
+              <div id="active_objective_text" class="flex items-center gap-1.5 truncate"></div>
+              <button type="button" onclick="clearObjective()" class="text-[10px] text-slate-400 hover:text-rose-400 font-mono ml-2 transition whitespace-nowrap">✕ Quitar objetivo</button>
+            </div>
+
+            <textarea id="mainAction" rows="3" 
+              oninput="handleMainActionInput(this.value)"
+              placeholder="Describe aquí lo que pasa en tu video o imagen (ej: Un frasco de perfume de lujo sobre agua cristalina)..."
+              class="w-full bg-[#0B0F19]/90 border border-[#232D42] rounded-xl p-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00D2FF] focus:ring-1 focus:ring-[#00D2FF] transition resize-none"></textarea>
+            <div class="flex items-center justify-between mt-2 text-[11px] text-[#94A3B8]">
+              <p id="ui_action_hint">
+                Escribe en tu idioma habitual. El Auto-Director sumará automáticamente la configuración técnica de dirección a tu contexto.
+              </p>
+            </div>
+          </div>
+
+          <!-- Encabezado de Categorías -->
+          <div class="flex items-center justify-between pt-1">
+            <div class="flex items-center gap-2">
+              <h2 id="ui_categories_title" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300 font-display">
+                Categorías Cinemáticas (Guía 99)
+              </h2>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#161D2F] border border-[#232D42] text-[#00D2FF] font-mono">
+                9x11 Técnicas
+              </span>
+            </div>
+            <span id="ui_categories_subtitle" class="text-xs text-[#00D2FF] font-medium">
+              Activa las que desees incluir
+            </span>
+          </div>
+
+          <!-- Grid de las 9 Categorías -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="categoriesWrapper">
+            
+            <!-- Cat 1: Scene & Shots -->
+            <div id="card_cat1" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat1" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat1', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-blue-600/30 border border-blue-500/40 text-[10px] text-blue-300 font-mono">1</span>
+                    <span id="label_cat1">🎬 Scene & Shots</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Encuadre</span>
+              </label>
+              <div id="body_cat1" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat1" onchange="onCategorySelectChange('cat1')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 2: Camera Movement (Solo Video) -->
+            <div id="card_cat2" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat2" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat2', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-cyan-600/30 border border-cyan-500/40 text-[10px] text-cyan-300 font-mono">2</span>
+                    <span id="label_cat2">📹 Movimiento de Cámara</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-[#00D2FF] font-mono">Video Only</span>
+              </label>
+              <div id="body_cat2" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat2" onchange="onCategorySelectChange('cat2')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 3: Lens & Visual Look -->
+            <div id="card_cat3" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat3" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat3', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-blue-600/30 border border-blue-500/40 text-[10px] text-blue-300 font-mono">3</span>
+                    <span id="label_cat3">🔘 Lente y Óptica</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Focal</span>
+              </label>
+              <div id="body_cat3" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat3" onchange="onCategorySelectChange('cat3')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 4: Lighting & Mood -->
+            <div id="card_cat4" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat4" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat4', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-amber-600/30 border border-amber-500/40 text-[10px] text-amber-300 font-mono">4</span>
+                    <span id="label_cat4">☀️ Iluminación y Atmósfera</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Luz</span>
+              </label>
+              <div id="body_cat4" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat4" onchange="onCategorySelectChange('cat4')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 5: Composition & Framing -->
+            <div id="card_cat5" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat5" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat5', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-emerald-600/30 border border-emerald-500/40 text-[10px] text-emerald-300 font-mono">5</span>
+                    <span id="label_cat5">⊞ Composición y Encuadre</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Geometría</span>
+              </label>
+              <div id="body_cat5" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat5" onchange="onCategorySelectChange('cat5')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 6: Location & Environment -->
+            <div id="card_cat6" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat6" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat6', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-purple-600/30 border border-purple-500/40 text-[10px] text-purple-300 font-mono">6</span>
+                    <span id="label_cat6">🏔️ Ubicación y Entorno</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Escenario</span>
+              </label>
+              <div id="body_cat6" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat6" onchange="onCategorySelectChange('cat6')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 7: People & Action -->
+            <div id="card_cat7" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat7" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat7', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-indigo-600/30 border border-indigo-500/40 text-[10px] text-indigo-300 font-mono">7</span>
+                    <span id="label_cat7">👥 Sujetos y Acción</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Actividad</span>
+              </label>
+              <div id="body_cat7" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat7" onchange="onCategorySelectChange('cat7')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 8: Visual Style & Genre -->
+            <div id="card_cat8" class="cat-card glass-card rounded-xl p-3.5 transition duration-200">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat8" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat8', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-pink-600/30 border border-pink-500/40 text-[10px] text-pink-300 font-mono">8</span>
+                    <span id="label_cat8">🎨 Estilo Visual y Género</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Color Grade</span>
+              </label>
+              <div id="body_cat8" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat8" onchange="onCategorySelectChange('cat8')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+            <!-- Cat 9: Advanced Effects -->
+            <div id="card_cat9" class="cat-card glass-card rounded-xl p-3.5 transition duration-200 md:col-span-2">
+              <label class="flex items-center justify-between cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" id="check_cat9" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" onchange="toggleBox('cat9', true)">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5 font-display">
+                    <span class="px-1.5 py-0.5 rounded bg-violet-600/30 border border-violet-500/40 text-[10px] text-violet-300 font-mono">9</span>
+                    <span id="label_cat9">🪄 Efectos Avanzados y VFX</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">Post-Pro</span>
+              </label>
+              <div id="body_cat9" class="hidden mt-3 pt-2.5 border-t border-[#232D42]">
+                <select id="val_cat9" onchange="onCategorySelectChange('cat9')" class="w-full bg-[#0B0F19] border border-[#232D42] rounded-lg text-xs p-2.5 text-slate-200 focus:outline-none focus:border-[#00D2FF]"></select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Módulo de Audio Nativo Sincronizado (Omni Flash 1.1) -->
+          <div id="audioWrapper" class="glass-card rounded-xl p-4 border border-[#0051FF]/40 bg-[#0051FF]/10 flex items-center justify-between gap-3 shadow-lg">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" id="check_audio" onchange="autoUpdatePrompt()" class="w-4 h-4 rounded accent-[#00D2FF] bg-[#0B0F19] border-[#232D42]" checked>
+              <div>
+                <span id="ui_audio_title" class="text-xs font-bold text-white flex items-center gap-2 font-display">
+                  <span>🎧</span> Capa de Audio Nativo Sincronizado (Omni Flash 1.1)
+                </span>
+                <span id="ui_audio_desc" class="text-[11px] text-[#94A3B8]">
+                  Genera directivas de sonido ambiente y foley diegético de alta fidelidad sincronizado a la toma.
+                </span>
+              </div>
+            </label>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-[#00D2FF]/20 text-[#00D2FF] border border-[#00D2FF]/40 font-mono whitespace-nowrap">
+              Foley HD
+            </span>
+          </div>
+
+          <!-- Botón Principal Generar Prompt -->
+          <button onclick="generatePrompt()" 
+            id="ui_btn_generate"
+            class="w-full py-4 px-6 rounded-xl gradient-btn-primary font-bold text-sm sm:text-base tracking-wide text-[#0B0F19] font-display flex items-center justify-center gap-2 shadow-glow-cyan">
+            <span>⚡</span>
+            <span>Generar Prompt Optimizado</span>
+          </button>
+
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- COLUMNA DERECHA: Salida del Prompt (5 cols)               -->
+        <!-- ======================================================== -->
+        <div class="lg:col-span-5">
+          <div class="sticky top-20 glass-card rounded-2xl p-5 shadow-card flex flex-col min-h-[520px]">
+            
+            <!-- Header de Salida -->
+            <div class="flex items-center justify-between border-b border-[#232D42] pb-3 mb-4">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#00D2FF] animate-pulse"></span>
+                <h3 id="ui_output_title" class="text-xs sm:text-sm font-bold text-white font-display">
+                  Prompt Resultante (100% Inglés IA)
+                </h3>
+                <span id="badge_translation_status" class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono flex items-center gap-1 shadow-sm">
+                  <span>🌐</span> <span id="translation_status_text">100% Technical English</span>
+                </span>
+                <span id="badge_speech_status" class="hidden text-[9px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-[#00D2FF] font-mono flex items-center gap-1 shadow-sm">
+                  <span>🎙️</span> <span>Voz en Español Latino Neutro</span>
+                </span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button id="copyBtn" onclick="copyPrompt()" 
+                  class="text-xs bg-[#0051FF] hover:bg-[#00D2FF] text-white hover:text-[#0B0F19] font-semibold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all active:scale-95 shadow">
+                  <span id="copyIcon">📋</span>
+                  <span id="copyLabel">Copiar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Prompt Output Box -->
+            <div id="outputBox" class="flex-1 bg-[#0B0F19] border border-[#232D42] rounded-xl p-4 text-xs sm:text-sm text-slate-100 font-mono leading-relaxed overflow-y-auto max-h-[400px] selection:bg-[#00D2FF] selection:text-[#0B0F19] custom-scrollbar">
+              <span id="ui_output_placeholder" class="text-slate-500 italic font-sans">
+                Describe la escena a la izquierda o selecciona un preset profesional para comenzar.
+              </span>
+            </div>
+
+            <!-- Metadatos de Salida & Target Engine -->
+            <div class="mt-4 pt-3 border-t border-[#232D42] text-[11px] text-[#94A3B8] space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white flex items-center gap-1.5">
+                  <span>🎯</span> <span id="ui_engine_note">Motor de destino:</span>
+                </span>
+                <span id="outputTargetEngine" class="text-[#00D2FF] font-mono text-[10px] bg-[#161D2F] px-2 py-0.5 rounded border border-[#232D42]">
+                  Gemini Omni Flash 1.1 / Veo
+                </span>
+              </div>
+              <p id="ui_engine_desc" class="text-slate-400 leading-normal">
+                Ensamblado con sintaxis continua en inglés para máxima obediencia geométrica y fidelidad sin sesgos.
+              </p>
+              
+              <!-- Longitud y tokens estimados -->
+              <div class="flex items-center justify-between pt-1 border-t border-[#232D42]/60 text-[10px] text-slate-500 font-mono">
+                <span id="charCount">0 caracteres</span>
+                <span id="tokenEst">~0 tokens</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- GUÍA RÁPIDA Y ARQUITECTURA TÉCNICA (DESPLEGABLE)             -->
+      <!-- ============================================================ -->
+      <section class="mt-12 pt-8 border-t border-[#232D42]">
+        <div class="max-w-4xl mx-auto">
+          <details class="group glass-card rounded-2xl border border-[#232D42] p-5 cursor-pointer">
+            <summary class="flex items-center justify-between text-xs sm:text-sm font-bold text-white font-display list-none select-none">
+              <div class="flex items-center gap-2.5">
+                <span class="text-base text-[#00D2FF]">📖</span>
+                <span id="manual_header_title">Manual y Guía de Dirección Técnica</span>
+                <span class="text-[10px] font-mono text-[#00D2FF] bg-[#00D2FF]/10 px-2 py-0.5 rounded-full border border-[#00D2FF]/30">Arquitectura IA</span>
+              </div>
+              <span class="text-xs text-slate-400 group-open:rotate-180 transition-transform font-mono">▼</span>
+            </summary>
+            <p id="manual_header_subtitle" class="text-xs text-[#94A3B8] mt-2 mb-3">
+              Guía exhaustiva para dominar la dirección cinematográfica con inteligencia artificial multimodal.
+            </p>
+            <div id="manualDynamicContent" class="pt-3 border-t border-[#232D42] space-y-4 text-slate-300 text-xs sm:text-sm leading-relaxed">
+              <!-- Inyectado dinámicamente según el idioma -->
+            </div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER                                                       -->
+    <!-- ============================================================ -->
+    <footer class="mt-16 border-t border-[#232D42] bg-[#0B0F19] py-8 text-center text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#00D2FF] font-bold font-display">A\DAN SOLUT\ONS</span>
+          <span>• Del caos operativo al piloto automático.</span>
+        </div>
+        <div>
+          <span>Optimizado para Google AI Studio (Omni Flash 1.1, Veo, Nano Banana 2 e Imagen 3)</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL DE CONFIGURACIÓN SUPABASE (AJUSTES API)                -->
+  <!-- ============================================================ -->
+  <div id="config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="glass-card rounded-2xl p-6 max-w-md w-full border border-[#232D42] shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white font-display flex items-center gap-2">
+          <span>⚙️</span> Configuración de Supabase
+        </h3>
+        <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+        Ingresa las credenciales de tu proyecto de Supabase para validar la tabla <code class="text-[#00D2FF] font-mono">clientes_autorizados</code> de compradores:
+      </p>
+
+      <div class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+            SUPABASE_URL
+          </label>
+          <input type="text" id="cfg_supabase_url" placeholder="https://vygsaoevhjwmoaqlptgi.supabase.co" 
+            class="w-full bg-[#0B0F19] border border-[#232D42] rounded-xl p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#00D2FF]">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+            SUPABASE_ANON_KEY (Publishable Key)
+          </label>
+          <input type="password" id="cfg_supabase_anon_key" placeholder="sb_publishable_ss912_..." 
+            class="w-full bg-[#0B0F19] border border-[#232D42] rounded-xl p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#00D2FF]">
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-2.5">
+        <button onclick="toggleConfigModal()" class="px-4 py-2 rounded-xl text-xs text-slate-300 hover:bg-[#161D2F] border border-[#232D42] transition">
+          Cancelar
+        </button>
+        <button onclick="saveSupabaseConfig()" class="px-4 py-2 rounded-xl text-xs font-bold gradient-btn-primary text-[#0B0F19] transition">
+          Guardar y Conectar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- LÓGICA JAVASCRIPT DEL OPTIMIZADOR Y SUPABASE AUTH            -->
+  <!-- ============================================================ -->
+  <script>
+    // ============================================================
+    // CONFIGURACIÓN DE SUPABASE (CREDENCIALES Y TABLA WHITELIST)
+    // ============================================================
+    // Configuración activa del proyecto Supabase:
+    const DEFAULT_SUPABASE_URL = "https://vygsaoevhjwmoaqlptgi.supabase.co";
+    const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_ss912_3auC3LVUA6lBpY6A_Kz6J4z_c";
+
+    let supabaseClient = null;
+
+    function getSupabaseConfig() {
+      return {
+        url: localStorage.getItem('aidan_supabase_url') || window.ENV_SUPABASE_URL || DEFAULT_SUPABASE_URL,
+        anonKey: localStorage.getItem('aidan_supabase_anon_key') || window.ENV_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY
+      };
+    }
+
+    function isConfigValid(cfg) {
+      return cfg && cfg.url && cfg.anonKey && !cfg.url.includes('TU-PROYECTO') && cfg.url.startsWith('https://');
+    }
+
+    function initSupabase() {
+      const cfg = getSupabaseConfig();
+      if (isConfigValid(cfg) && window.supabase) {
+        try {
+          if (!supabaseClient) {
+            supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+          }
+          return true;
+        } catch (e) {
+          console.error('Error al inicializar Supabase:', e);
+          return false;
+        }
+      }
+      return false;
+    }
+
+    // Modal de configuración de Supabase
+    function toggleConfigModal() {
+      const modal = document.getElementById('config-modal');
+      const cfg = getSupabaseConfig();
+      if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      } else {
+        document.getElementById('cfg_supabase_url').value = cfg.url.includes('TU-PROYECTO') ? '' : cfg.url;
+        document.getElementById('cfg_supabase_anon_key').value = cfg.anonKey.includes('TU-ANON') ? '' : cfg.anonKey;
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function saveSupabaseConfig() {
+      const url = document.getElementById('cfg_supabase_url').value.trim();
+      const anonKey = document.getElementById('cfg_supabase_anon_key').value.trim();
+      if (!url || !anonKey) {
+        alert('Por favor ingresa URL y Anon Key válidas de Supabase.');
+        return;
+      }
+      localStorage.setItem('aidan_supabase_url', url);
+      localStorage.setItem('aidan_supabase_anon_key', anonKey);
+      toggleConfigModal();
+      initSupabase();
+      checkAuthAndWhitelist();
+    }
+
+    // ============================================================
+    // FLUJO DE VALIDACIÓN DE COMPRADORES (TABLA: clientes_autorizados)
+    // ============================================================
+    
+    // 1. Validación directa por correo (Comprador de 5TB en vivo / activación)
+    async function verifyBuyerEmail(inputVal) {
+      const emailInput = document.getElementById('input_buyer_email');
+      const email = (inputVal || (emailInput ? emailInput.value : '')).trim().toLowerCase();
+      const unauthBox = document.getElementById('unauthorized-box');
+
+      if (!email || !email.includes('@')) {
+        alert('Por favor ingresa un correo electrónico válido.');
+        if (emailInput) emailInput.focus();
+        return;
+      }
+
+      if (!initSupabase()) {
+        toggleConfigModal();
+        return;
+      }
+
+      const btn = document.getElementById('btn_verify_email');
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin">🔄</span> Verificando en base de datos...`;
+      }
+
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Network timeout')), 6000)
+        );
+        const queryPromise = supabaseClient
+          .from('clientes_autorizados')
+          .select('email')
+          .eq('email', email)
+          .single();
+
+        const res = await Promise.race([queryPromise, timeoutPromise]);
+        const data = res && res.data;
+
+        if (data && data.email) {
+          // Desbloqueas la interfaz del creador de prompts
+          localStorage.setItem('aidan_authorized_email', data.email.toLowerCase());
+          document.getElementById('login-screen').classList.add('hidden');
+          document.getElementById('app-prompts').classList.remove('hidden');
+          if (unauthBox) unauthBox.classList.add('hidden');
+          setupUserChip({ email: data.email });
+        } else {
+          // Acceso no autorizado
+          if (unauthBox) {
+            unauthBox.classList.remove('hidden');
+            document.getElementById('unauthorized-email').textContent = email;
+          }
+          alert('Acceso no autorizado. Este correo no tiene una suscripción activa de Google AI Pro.');
+        }
+      } catch (err) {
+        console.error('Error al verificar correo:', err);
+        if (unauthBox) {
+          unauthBox.classList.remove('hidden');
+          document.getElementById('unauthorized-email').textContent = email;
+        }
+        alert('Acceso no autorizado. Este correo no tiene una suscripción activa de Google AI Pro.');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
+    // 2. Comprobar sesión recordada al cargar la página
+    async function checkAuthAndWhitelist() {
+      const loader = document.getElementById('auth-loading');
+      const loginScreen = document.getElementById('login-screen');
+      const appPrompts = document.getElementById('app-prompts');
+
+      const finishLoading = (showApp = false) => {
+        if (loader) loader.classList.add('hidden');
+        if (showApp) {
+          if (loginScreen) loginScreen.classList.add('hidden');
+          if (appPrompts) appPrompts.classList.remove('hidden');
+        } else {
+          if (loginScreen) loginScreen.classList.remove('hidden');
+          if (appPrompts) appPrompts.classList.add('hidden');
+        }
+      };
+
+      if (!initSupabase()) {
+        finishLoading(false);
+        return;
+      }
+
+      // Revisar si hay un correo recordado en localStorage
+      const savedEmail = localStorage.getItem('aidan_authorized_email');
+      if (savedEmail) {
+        try {
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth check timeout')), 3500)
+          );
+          const queryPromise = supabaseClient
+            .from('clientes_autorizados')
+            .select('email')
+            .eq('email', savedEmail.trim().toLowerCase())
+            .single();
+
+          const res = await Promise.race([queryPromise, timeoutPromise]);
+          const data = res && res.data;
+
+          if (data && data.email) {
+            finishLoading(true);
+            setupUserChip({ email: data.email });
+            return;
+          } else {
+            localStorage.removeItem('aidan_authorized_email');
+          }
+        } catch (e) {
+          console.warn('Error verificando sesión guardada:', e);
+        }
+      }
+
+      // Si no hay sesión previa válida, mostrar pantalla de validación
+      finishLoading(false);
+    }
+
+    // Configurar chip de usuario en la barra superior
+    function setupUserChip(user) {
+      const chip = document.getElementById('user_profile_chip');
+      const emailDisplay = document.getElementById('user_email_display');
+      const avatar = document.getElementById('user_avatar');
+
+      const email = user.email || '';
+      if (emailDisplay) emailDisplay.textContent = email;
+      if (avatar) {
+        const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+        if (avatarUrl) {
+          avatar.innerHTML = `<img src="${avatarUrl}" class="w-full h-full rounded-full object-cover" alt="User">`;
+        } else {
+          const initial = (email || 'U')[0].toUpperCase();
+          avatar.textContent = initial;
+        }
+      }
+      if (chip) chip.classList.remove('hidden');
+    }
+
+    // Cerrar sesión
+    async function signOutUser() {
+      localStorage.removeItem('aidan_authorized_email');
+      if (supabaseClient) {
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (e) {}
+      }
+      window.location.reload();
+    }
+
+    // Cerrar sesión y reintentar con otro correo
+    function signOutAndRetry() {
+      localStorage.removeItem('aidan_authorized_email');
+      const unauthBox = document.getElementById('unauthorized-box');
+      if (unauthBox) unauthBox.classList.add('hidden');
+      const emailInput = document.getElementById('input_buyer_email');
+      if (emailInput) {
+        emailInput.value = '';
+        emailInput.focus();
+      }
+    }
+
+    // ============================================================
+    // ESTADO Y LÓGICA DEL OPTIMIZADOR DE PROMPTS
+    // ============================================================
+    let currentLang = 'es';
+    let currentMode = 'video';
+    let activePresetId = null;
+    let userLockedPreset = false;
+
+    // DICCIONARIOS MULTILINGÜES (i18n)
+    const i18n = {
+      es: {
+        subtitle: "Omni Flash 1.1 & Nano Banana 2 • Google AI Studio",
+        btn_reset: "Restablecer",
+        target_label: "¿Qué deseas crear?",
+        target_badge: "Ajusta automáticamente las directivas cinematográficas y acústicas.",
+        mode_video: "Video (Omni Flash 1.1)",
+        mode_image: "Imagen (Nano Banana 2)",
+        action_label: "Acción principal / ¿Qué sucede en la escena?",
+        required: "Tu contexto",
+        action_placeholder: "Describe aquí lo que pasa en tu video o imagen (ej: Un frasco de perfume de lujo sobre agua cristalina)...",
+        action_hint: "Escribe en tu idioma habitual. El optimizador sumará automáticamente la configuración técnica de dirección a tu contexto.",
+        categories_title: "Categorías Cinemáticas (Guía 99)",
+        categories_subtitle: "Activa las que desees incluir",
+        audio_title: "🎧 Capa de Audio Nativo Sincronizado (Omni Flash 1.1)",
+        audio_desc: "Genera directivas de sonido ambiente y foley diegético sincronizado para Omni Flash 1.1.",
+        btn_generate: "⚡ Generar Prompt Optimizado",
+        output_title: "Prompt Resultante (Inglés IA)",
+        copy_label: "Copiar",
+        copy_success: "¡Copiado!",
+        output_placeholder: "Describe la escena a la izquierda o selecciona un preset profesional para comenzar.",
+        engine_note: "Motor de destino:",
+        engine_desc: "Ensamblado con sintaxis continua en inglés para máxima obediencia geométrica y fidelidad sin sesgos en Gemini Omni Flash 1.1, Veo y Nano Banana 2.",
+        warning_empty: "⚠️ Por favor escribe al menos la acción principal antes de generar.",
+        cat_titles: {
+          cat1: "🎬 Encuadre y Tipo de Plano",
+          cat2: "📹 Movimiento de Cámara",
+          cat3: "🔘 Lente y Óptica",
+          cat4: "☀️ Iluminación y Atmósfera",
+          cat5: "⊞ Composición y Encuadre",
+          cat6: "🏔️ Ubicación y Entorno",
+          cat7: "👥 Sujetos y Acción",
+          cat8: "🎨 Estilo Visual y Género",
+          cat9: "🪄 Efectos Avanzados y VFX"
+        },
+        manual_title: "Manual Completo de Instrucciones y Arquitectura",
+        manual_subtitle: "Guía exhaustiva para dominar la dirección cinematográfica con inteligencia artificial multimodal."
+      },
+      en: {
+        subtitle: "Omni Flash 1.1 & Nano Banana 2 • Google AI Studio",
+        btn_reset: "Reset",
+        target_label: "What do you want to create?",
+        target_badge: "Automatically adapts cinematography and acoustic directives.",
+        mode_video: "Video (Omni Flash 1.1)",
+        mode_image: "Image (Nano Banana 2)",
+        action_label: "Main Action / What happens in the scene?",
+        required: "Your context",
+        action_placeholder: "Describe what happens in your video or image (e.g., A luxury perfume bottle over pristine water)...",
+        action_hint: "Type naturally in your language. The prompt builder seamlessly combines your subject with technical cinematography directives.",
+        categories_title: "Cinematic Categories (99 Guide)",
+        categories_subtitle: "Toggle items you wish to apply",
+        audio_title: "🎧 Synchronized Native Audio Layer (Omni Flash 1.1)",
+        audio_desc: "Generates realistic environmental foley & diegetic ambient sound for Omni Flash 1.1.",
+        btn_generate: "⚡ Generate Optimized Prompt",
+        output_title: "Final Output Prompt (AI English)",
+        copy_label: "Copy",
+        copy_success: "Copied!",
+        output_placeholder: "Describe the scene on the left or select a professional preset to begin.",
+        engine_note: "Target Engine:",
+        engine_desc: "Optimized in natural technical English prose for Gemini Omni Flash 1.1, Veo, and Nano Banana 2.",
+        warning_empty: "⚠️ Please enter the main action description first.",
+        cat_titles: {
+          cat1: "🎬 Scene & Shots",
+          cat2: "📹 Camera Movement",
+          cat3: "🔘 Lens & Visual Look",
+          cat4: "☀️ Lighting & Mood",
+          cat5: "⊞ Composition & Framing",
+          cat6: "🏔️ Location & Environment",
+          cat7: "👥 People & Action",
+          cat8: "🎨 Visual Style & Genre",
+          cat9: "🪄 Advanced Effects & VFX"
+        },
+        manual_title: "Complete Instruction Manual & Architecture",
+        manual_subtitle: "Exhaustive guide to mastering AI cinematography with multimodal foundation models."
+      },
+      pt: {
+        subtitle: "Omni Flash 1.1 & Nano Banana 2 • Google AI Studio",
+        btn_reset: "Redefinir",
+        target_label: "O que você deseja criar?",
+        target_badge: "Adapta automaticamente as diretivas cinematográficas e acústicas.",
+        mode_video: "Vídeo (Omni Flash 1.1)",
+        mode_image: "Imagem (Nano Banana 2)",
+        action_label: "Ação principal / O que acontece na cena?",
+        required: "Seu contexto",
+        action_placeholder: "Descreva o que acontece no seu vídeo ou imagem (ex: Um frasco de perfume sobre água cristalina)...",
+        action_hint: "Escreva no seu idioma habitual. O otimizador combinará a configuração técnica ao seu contexto.",
+        categories_title: "Categorias Cinemáticas (Guia 99)",
+        categories_subtitle: "Marque o que deseja incluir",
+        audio_title: "🎧 Camada de Áudio Nativo Sincronizado (Omni Flash 1.1)",
+        audio_desc: "Gera diretivas de áudio foley e ambiente sincronizado para Omni Flash 1.1.",
+        btn_generate: "⚡ Gerar Prompt Otimizado",
+        output_title: "Prompt Resultante (Inglês IA)",
+        copy_label: "Copiar",
+        copy_success: "Copiado!",
+        output_placeholder: "Descreva a cena à esquerda ou selecione um preset profissional para começar.",
+        engine_note: "Motor de destino:",
+        engine_desc: "Otimizado com sintaxe em inglês para máxima precisão no Gemini Omni Flash 1.1, Veo e Nano Banana 2.",
+        warning_empty: "⚠️ Por favor, escreva a ação principal antes de gerar.",
+        cat_titles: {
+          cat1: "🎬 Enquadramento e Plano",
+          cat2: "📹 Movimento de Câmera",
+          cat3: "🔘 Lente e Visual Óptico",
+          cat4: "☀️ Iluminação e Atmosfera",
+          cat5: "⊞ Composição e Enquadramento",
+          cat6: "🏔️ Localização e Cenário",
+          cat7: "👥 Pessoas e Ação",
+          cat8: "🎨 Estilo Visual e Gênero",
+          cat9: "🪄 Efeitos Avançados e VFX"
+        },
+        manual_title: "Manual Completo de Instruções e Arquitetura",
+        manual_subtitle: "Guia exaustivo para dominar a direção cinematográfica com inteligência artificial multimodal."
+      }
+    };
+
+    // MATRIZ COMPLETA DE 99 TÉCNICAS CINEMATOGRÁFICAS (9 x 11)
+    const guideItems = {
+      cat1: [
+        { id: "1", en: "Establishing Shot", es: "Plano general de establecimiento", pt: "Plano de estabelecimento" },
+        { id: "2", en: "Wide Shot", es: "Plano general amplio (Wide Shot)", pt: "Plano aberto / geral" },
+        { id: "3", en: "Medium Shot", es: "Plano medio (Medium Shot)", pt: "Plano médio" },
+        { id: "4", en: "Close-up", es: "Primer plano (Close-up)", pt: "Primeiro plano (Close-up)" },
+        { id: "5", en: "Extreme Close-up", es: "Primerísimo primer plano / Detalle", pt: "Super close-up / Detalhe" },
+        { id: "6", en: "Over-the-shoulder", es: "Plano sobre el hombro", pt: "Sobre o ombro" },
+        { id: "7", en: "POV Shot", es: "Plano subjetivo en primera persona (POV)", pt: "Ponto de vista (POV)" },
+        { id: "8", en: "Tracking Shot", es: "Plano de seguimiento continuo", pt: "Plano de acompanhamento" },
+        { id: "9", en: "Drone Shot", es: "Toma con dron en movimiento", pt: "Tomada com drone" },
+        { id: "10", en: "Aerial View", es: "Vista aérea cenital 90°", pt: "Vista aérea do topo" },
+        { id: "11", en: "Dutch Angle", es: "Plano aberrante / holandés inclinado", pt: "Ângulo holandês / inclinado" }
+      ],
+      cat2: [
+        { id: "12", en: "Static Shot", es: "Toma estática fija en trípode", pt: "Tomada estática / fixa" },
+        { id: "13", en: "Pan Left / Right", es: "Paneo horizontal suave (Izq / Der)", pt: "Panorâmica (Esq / Dir)" },
+        { id: "14", en: "Tilt Up / Down", es: "Inclinación vertical (Tilt arriba/abajo)", pt: "Inclinação vertical (Tilt)" },
+        { id: "15", en: "Push In (Dolly Zoom In)", es: "Empuje suave hacia adentro (Push In)", pt: "Aproximação suave (Push In)" },
+        { id: "16", en: "Pull Out (Dolly Zoom Out)", es: "Alejamiento suave (Pull Out)", pt: "Afastamento suave (Pull Out)" },
+        { id: "17", en: "Tracking Forward", es: "Seguimiento frontal hacia adelante", pt: "Rastreamento para frente" },
+        { id: "18", en: "Tracking Backward", es: "Seguimiento en retroceso", pt: "Rastreamento para trás" },
+        { id: "19", en: "Orbit / Circular", es: "Movimiento orbital circular 360°", pt: "Movimento orbital circular 360°" },
+        { id: "20", en: "Handheld / Realistic", es: "Cámara en mano realista y orgánica", pt: "Câmera na mão realista" },
+        { id: "21", en: "Gimbal Smooth", es: "Movimiento ultra fluido con gimbal estabilizado", pt: "Movimento suave com gimbal" },
+        { id: "22", en: "Time-lapse Movement", es: "Movimiento cinético continuo en timelapse", pt: "Movimento contínuo em timelapse" }
+      ],
+      cat3: [
+        { id: "23", en: "16mm Wide Angle Lens", es: "Gran angular 16mm", pt: "Grande angular 16mm" },
+        { id: "24", en: "24mm Cinematic Lens", es: "Cinemático 24mm", pt: "Cinematográfico 24mm" },
+        { id: "25", en: "35mm Natural Lens", es: "Lente natural 35mm clásica", pt: "Lente natural 35mm" },
+        { id: "26", en: "50mm Standard Lens", es: "Estándar 50mm perspectiva ojo humano", pt: "Padrão 50mm olho humano" },
+        { id: "27", en: "85mm Portrait Lens", es: "Retrato 85mm con bokeh cremoso", pt: "Retrato 85mm com bokeh" },
+        { id: "28", en: "Macro Lens", es: "Lente Macro de ultra precisión textural", pt: "Lente Macro de ultra precisão" },
+        { id: "29", en: "Telephoto 200mm", es: "Teleobjetivo 200mm con compresión", pt: "Teleobjetiva de longo alcance" },
+        { id: "30", en: "Shallow Depth of Field (f/1.4 Bokeh)", es: "Profundidad de campo reducida (Bokeh f/1.4)", pt: "Pouca profundidade de campo" },
+        { id: "31", en: "Deep Focus (f/11)", es: "Enfoque profundo nítido en todos los planos", pt: "Foco profundo em toda a cena" },
+        { id: "32", en: "Fisheye Lens", es: "Lente ojo de pez con curvatura", pt: "Lente olho de peixe" },
+        { id: "33", en: "Anamorphic Lens Look", es: "Estilo anamórfico con destellos horizontales", pt: "Visual anamórfico cinematográfico" }
+      ],
+      cat4: [
+        { id: "34", en: "Natural Daylight", es: "Luz natural diurna pura", pt: "Luz natural do dia" },
+        { id: "35", en: "Golden Hour Warmth", es: "Hora dorada cálida (Golden Hour)", pt: "Golden Hour / Hora de ouro" },
+        { id: "36", en: "Blue Hour Twilight", es: "Hora azul crepuscular atmosférica", pt: "Hora azul crepuscular" },
+        { id: "37", en: "Night Lighting", es: "Iluminación nocturna urbana", pt: "Iluminação noturna" },
+        { id: "38", en: "Low Light Moody", es: "Luz baja y sombras profundas con atmósfera", pt: "Luz baixa e sombras profundas" },
+        { id: "39", en: "Rim Lighting & Backlight", es: "Contraluz marcado con borde de luz", pt: "Luz de fundo / Contraluz" },
+        { id: "40", en: "Dramatic Silhouette", es: "Silueta dramática contra luz de fondo", pt: "Silhueta dramática" },
+        { id: "41", en: "Neon Cyberpunk Lighting", es: "Luces de neón cian y magenta vibrantes", pt: "Luzes de neon vibrantes" },
+        { id: "42", en: "Soft Diffused Studio Light", es: "Iluminación difusa y suave de estudio", pt: "Iluminação difusa e suave" },
+        { id: "43", en: "Dramatic Chiaroscuro", es: "Iluminación claroscuro con contraste extremo", pt: "Iluminação dramática chiaroscuro" },
+        { id: "44", en: "Intimate Candlelight", es: "Luz cálida y parpadeante de velas", pt: "Luz de velas intimista" }
+      ],
+      cat5: [
+        { id: "45", en: "Rule of Thirds", es: "Regla de los tercios armónica", pt: "Regra dos terços" },
+        { id: "46", en: "Centered Symmetric Composition", es: "Composición centrada axial", pt: "Composição centralizada" },
+        { id: "47", en: "Leading Convergence Lines", es: "Líneas de fuga visuales hacia el sujeto", pt: "Linhas guia visuais" },
+        { id: "48", en: "Frame within a Frame", es: "Marco natural dentro de un marco", pt: "Quadro dentro do quadro" },
+        { id: "49", en: "Symmetrical Architectural Framing", es: "Composición arquitectónica perfectamente simétrica", pt: "Composição simétrica" },
+        { id: "50", en: "Minimalist Negative Space", es: "Espacio negativo minimalista", pt: "Espaço negativo minimalista" },
+        { id: "51", en: "Foreground Framing Element", es: "Enmarcado con elemento en primer plano", pt: "Enquadramento com primer plano" },
+        { id: "52", en: "Layered Depth Composition", es: "Composición por capas de profundidad (3 planos)", pt: "Composição em camadas" },
+        { id: "53", en: "Minimalist Geometry", es: "Composición geométrica pura y limpia", pt: "Composição minimalista" },
+        { id: "54", en: "Dynamic Diagonal Composition", es: "Composición diagonal y cinética", pt: "Composição diagonal e dinâmica" },
+        { id: "55", en: "Epic Hero Shot", es: "Plano heroico imponente en contrapicado", pt: "Tomada heroica imponente" }
+      ],
+      cat6: [
+        { id: "56", en: "Modern High-Tech Metropolis", es: "Metrópolis moderna de rascacielos de cristal", pt: "Metrópole moderna" },
+        { id: "57", en: "Traditional Rural Village", es: "Pueblo rural tradicional y rústico", pt: "Vila tradicional / histórica" },
+        { id: "58", en: "Corporate Executive Office", es: "Oficina corporativa minimalista", pt: "Escritório corporativo" },
+        { id: "59", en: "Cozy Modern Café / Restaurant", es: "Cafetería o bistró moderno acogedor", pt: "Café ou restaurante" },
+        { id: "60", en: "Lush Misty Forest", es: "Bosque neblinoso y naturaleza exuberante", pt: "Floresta / Natureza exuberante" },
+        { id: "61", en: "Alpine Mountain Landscape", es: "Paisaje montañoso alpino con picos nevados", pt: "Paisagem de montanha" },
+        { id: "62", en: "Tropical Beach & Horizon", es: "Playa tropical y horizonte oceánico infinito", pt: "Praia e horizonte do oceano" },
+        { id: "63", en: "Bustling Urban Street", es: "Calle urbana concurrida con tráfico y peatones", pt: "Rua urbana movimentada" },
+        { id: "64", en: "Warm Minimalist Home Interior", es: "Interior de hogar nórdico y acogedor", pt: "Interior de casa aconchegante" },
+        { id: "65", en: "Futuristic Cyberpunk Megacity", es: "Megaciudad futurista ciberpunk con hologramas", pt: "Cidade futurista cyberpunk" },
+        { id: "66", en: "Deep Space Station", es: "Estación orbital en el espacio exterior", pt: "Espaço sideral / Mundo sci-fi" }
+      ],
+      cat7: [
+        { id: "67", en: "Speaking Directly to Camera", es: "Hablando con seguridad directo a cámara", pt: "Falando para a câmera" },
+        { id: "68", en: "Walking Naturally Forward", es: "Caminando con paso natural hacia el frente", pt: "Caminhando com postura natural" },
+        { id: "69", en: "Running with High Intensity", es: "Corriendo con dinamismo y urgencia", pt: "Correndo com dinamismo" },
+        { id: "70", en: "Deeply Focused Working / Studying", es: "Trabajando o estudiando profundamente concentrado", pt: "Trabalhando ou estudando focado" },
+        { id: "71", en: "Precision Cooking & Plating", es: "Cocinando y manipulando ingredientes de alta cocina", pt: "Cozinhando com ingredientes" },
+        { id: "72", en: "Solemn Contemplation / Ritual", es: "Actitud contemplativa solemne o ceremonial", pt: "Orando ou em ato cerimonial" },
+        { id: "73", en: "Vibrant Collaborative Team Interaction", es: "Interacción de equipo colaborativa y viva", pt: "Interação de grupo empolgada" },
+        { id: "74", en: "Nuanced Emotional Micro-Expression", es: "Microexpresión emocional sutil e intensa", pt: "Expressão emocional profunda" },
+        { id: "75", en: "Smooth Slow Motion Motion", es: "Movimiento ralentizado ultra fluido", pt: "Movimento em câmera lenta" },
+        { id: "76", en: "Authentic Daily Life Routine", es: "Actividad cotidiana capturada con naturalidad", pt: "Atividade rotineira do cotidiano" },
+        { id: "77", en: "Before & After Cinematic Transformation", es: "Secuencia de transformación evidente antes/después", pt: "Transformação antes e depois" }
+      ],
+      cat8: [
+        { id: "78", en: "Cinematic 35mm Film Look (Kodak Color Grade)", es: "Look de cine 35mm grano Kodak auténtico", pt: "Visual cinematográfico 35mm" },
+        { id: "79", en: "High-End Documentary Style", es: "Estilo documental hiperrealista premium", pt: "Estilo documentário realista" },
+        { id: "80", en: "Makoto Shinkai Cinematic Anime Style", es: "Estilo anime cinematográfico hiperdetallado", pt: "Estilo anime detalhado" },
+        { id: "81", en: "3D Photorealistic Pixar-grade Animation", es: "Animación 3D fotorrealista de alto presupuesto", pt: "Animação 3D de alta qualidade" },
+        { id: "82", en: "Tactile Claymation / Stop-Motion Style", es: "Estilo Stop-Motion / Claymation artesanal", pt: "Estilo Claymation / Massinha" },
+        { id: "83", en: "Atmospheric Masterpiece Watercolor", es: "Acuarela pictórica atmosférica fluida", pt: "Estilo aquarela artística" },
+        { id: "84", en: "Graphic Novel / Comic Book Inking", es: "Novela gráfica con entintado y tramas", pt: "Quadrinhos e ilustração" },
+        { id: "85", en: "1970s Vintage Film Grain & Warmth", es: "Película retro vintage años 70 con grano cálido", pt: "Filme vintage / Retrô" },
+        { id: "86", en: "Fine Art High-Contrast Black & White", es: "Blanco y negro fino con rango dinámico y contraste", pt: "Preto e branco de alto contraste" },
+        { id: "87", en: "Luminous Magical Realism Fantasy", es: "Fantasía mágica luminosa con partículas de éter", pt: "Fantasia mágica luminosa" },
+        { id: "88", en: "Dark Gritty Cyberpunk Aesthetic", es: "Ciberpunk oscuro y descarnado con lluvia ácida", pt: "Ficção científica cyberpunk" }
+      ],
+      cat9: [
+        { id: "89", en: "Cinematic 120fps Slow Motion", es: "Cámara lenta cinematográfica a 120fps", pt: "Câmera lenta cinemática", videoOnly: true },
+        { id: "90", en: "Time-lapse Cloud & Light Flow", es: "Paso acelerado del tiempo (Timelapse solar y nubes)", pt: "Timelapse do tempo passando", videoOnly: true },
+        { id: "91", en: "Hyperlapse Kinetic Motion", es: "Hyperlapse cinético en traslación continua", pt: "Hyperlapse em movimiento", videoOnly: true },
+        { id: "92", en: "Seamless Optical Match Cut Transition", es: "Transición match-cut invisible y continua", pt: "Efeitos de transição dinâmicos", videoOnly: true },
+        { id: "93", en: "Text-to-Video Conceptual Staging", es: "Composición conceptual para síntesis de video", pt: "Conceito visual Text-to-Media" },
+        { id: "94", en: "Fluid Image-to-Video Natural Flow", es: "Animación física natural a partir de imagen fija", pt: "Animação fluida de imagem", videoOnly: true },
+        { id: "95", en: "Multi-shot Narrative Progression", es: "Secuencia narrativa multi-toma cohesiva", pt: "Narrativa sequencial de várias tomadas", videoOnly: true },
+        { id: "96", en: "Commercial Luxury Product Reveal", es: "Revelación publicitaria de producto de lujo", pt: "Revelação de producto estilo comercial" },
+        { id: "97", en: "Volumetric Smoke & Atmospheric VFX Particles", es: "Efectos volumétricos de humo y partículas VFX", pt: "Efeitos especiais e partículas VFX" },
+        { id: "98", en: "Photorealistic Digital Human / Avatar", es: "Personaje hiperrealista con textura de poros de piel real", pt: "Personagem hiper-realista / Avatar IA" },
+        { id: "99", en: "Surreal Dreamlike Spatial Distortion", es: "Atmósfera onírica surrealista con física distorsionada", pt: "Atmosfera onírica e surrealista" }
+      ]
+    };
+
+    // DEFINICIONES DE CONFIGURACIONES POR OBJETIVO (PRESETS TÉCNICOS)
+    const presetDefinitions = {
+      product_image: {
+        mode: 'image',
+        ar: '1:1',
+        title: 'Producto Estudio (Foto Comercial 1:1)',
+        desc: 'Configuración técnica para venta y e-commerce: Lente Macro para microtexturas, iluminación difusa de estudio que elimina brillos parásitos y encuadre centrado 1:1.',
+        contextPlaceholder: 'Escribe tu producto aquí (ej: Una botella de sérum facial de vidrio ámbar con cuentagotas sobre mármol húmedo)...',
+        exampleAction: 'A luxury matte black chronograph wristwatch on a dark textured slate podium with fine water droplets',
+        keywords: [
+          'vender reloj', 'vender perfume', 'vender zapatilla', 'vender joya', 'vender producto', 
+          'foto producto', 'foto comercial', 'ecommerce', 'tienda online', 'foto catalogo', 'foto catálogo', 
+          'bodegon', 'bodegón', 'reloj', 'perfume', 'joya', 'joyería', 'joyeria', 'anillo', 'collar', 
+          'zapatilla', 'sneaker', 'calzado', 'cosmetico', 'cosmético', 'frasco', 'crema facial', 'crema', 
+          'botella', 'packaging', 'empaque', 'tarro', 'envase', 'locion', 'loción', 'suero', 'serum', 'sérum', 'podio'
+        ],
+        categories: {
+          '1': 'Close-up',
+          '3': 'Macro Lens',
+          '4': 'Soft Diffused Studio Light',
+          '5': 'Centered Symmetric Composition',
+          '8': 'High-End Documentary Style',
+          '9': 'Commercial Luxury Product Reveal'
+        }
+      },
+      product_video: {
+        mode: 'video',
+        ar: '9:16',
+        title: 'Producto Estudio (Video Ads 360°)',
+        desc: 'Configuración técnica para pauta publicitaria en TikTok y Reels: Rotación orbital 360°, lente 50mm sin distorsión, contraluz de recorte y capa de audio foley HD sincronizado.',
+        contextPlaceholder: 'Describe tu producto en movimiento (ej: Zapatilla deportiva de running rotando en el aire con salpicaduras de energía)...',
+        exampleAction: 'A high-end artisan leather sneaker rotating smoothly on a dark reflective pedestal with dramatic rim lighting',
+        keywords: [
+          'video ads', 'video ad', 'anuncio video', 'video comercial', 'comercial video', 
+          'tiktok ads', 'reels ads', 'ad 360', 'video 360', 'rotacion 360', 'rotación 360', 
+          'video producto', 'video de producto', 'pauta video', 'pauta publicitaria', 
+          'anuncio producto', 'tiktok shop', 'vender con video', 'video promocional'
+        ],
+        categories: {
+          '1': 'Close-up',
+          '2': 'Orbit / Circular',
+          '3': '50mm Standard Lens',
+          '4': 'Rim Lighting & Backlight',
+          '5': 'Centered Symmetric Composition',
+          '8': 'High-End Documentary Style',
+          '9': 'Commercial Luxury Product Reveal'
+        },
+        audio: true
+      },
+      drone_image: {
+        mode: 'image',
+        ar: '16:9',
+        title: 'Vista Aérea / Dron (Foto Cenital 90°)',
+        desc: 'Configuración técnica para fotografía cenital top-down: Gran angular 16mm, líneas de fuga, perspectiva 90° y luz dorada para resaltar geometría de paisajes o arquitectura.',
+        contextPlaceholder: 'Describe el lugar o paisaje aéreo (ej: Un resort moderno junto a una playa de arena blanca y mar turquesa)...',
+        exampleAction: 'A breathtaking top-down 90-degree zenital aerial photograph over an epic winding coastal road meeting vibrant turquoise ocean waves and dramatic cliffs',
+        keywords: [
+          'foto cenital', 'cenital 90', 'cenital', 'top down', 'top-down', 'foto dron', 
+          'dron foto', 'vista aerea foto', 'vista aérea foto', 'foto paisaje aereo', 
+          'paisaje aereo', 'cenital playa', 'cenital ciudad', 'vista aérea', 'vista aerea'
+        ],
+        categories: {
+          '1': 'Aerial View',
+          '3': '16mm Wide Angle Lens',
+          '4': 'Golden Hour Warmth',
+          '5': 'Leading Convergence Lines',
+          '6': 'Tropical Beach & Horizon',
+          '8': 'Cinematic 35mm Film Look (Kodak Color Grade)'
+        }
+      },
+      drone_video: {
+        mode: 'video',
+        ar: '16:9',
+        title: 'Vista Aérea / Dron (Vuelo Cinemático Pro)',
+        desc: 'Configuración técnica para vuelo de dron en avance constante a 24mm, cámara lenta fluida a 120fps y audio ambiental de viento para turismo e intros cinematográficas.',
+        contextPlaceholder: 'Describe la ruta del vuelo (ej: Dron atravesando una quebrada entre montañas nevadas hacia un lago cristalino)...',
+        exampleAction: 'A continuous dynamic drone tracking shot cruising smoothly forward between mist-shrouded alpine mountain peaks and winding mountain pass at sunrise',
+        keywords: [
+          'vuelo dron', 'vuelo de dron', 'video dron', 'dron pro', 'tracking dron', 
+          'sobrevolando montañas', 'sobrevolando', 'vuelo cinematico', 'vuelo cinemático', 
+          'dron 120fps', 'video aereo', 'video aéreo', 'dron en avance', 'dron', 'drone'
+        ],
+        categories: {
+          '1': 'Drone Shot',
+          '2': 'Tracking Forward',
+          '3': '24mm Cinematic Lens',
+          '4': 'Golden Hour Warmth',
+          '5': 'Leading Convergence Lines',
+          '6': 'Alpine Mountain Landscape',
+          '8': 'Cinematic 35mm Film Look (Kodak Color Grade)',
+          '9': 'Cinematic 120fps Slow Motion'
+        },
+        audio: true
+      },
+      ugc_creator: {
+        mode: 'video',
+        ar: '9:16',
+        title: 'Creador UGC / Testimonial (Video 9:16)',
+        desc: 'Configuración técnica para contenido nativo de creador: Plano medio, cámara en mano realista, lente 35mm, hablando directamente al lente y audio diegético limpio.',
+        contextPlaceholder: 'Describe al creador o testimonial (ej: Joven profesional entusiasmada mostrando una app financiera en su smartphone)...',
+        exampleAction: 'A charismatic real creator holding a smartphone speaking enthusiastically directly to camera in a modern bright room, demonstrating an app',
+        keywords: [
+          'ugc', 'creador', 'creadora', 'creador de contenido', 'testimonial', 'hablando a camara', 
+          'hablando a cámara', 'hablando al lente', 'vlog', 'vlogger', 'tiktoker', 'influencer', 
+          'review', 'reseña', 'unboxing creador', 'selfie video', 'demostrando app', 'storytime',
+          'persona hablando', 'chico hablando', 'chica hablando'
+        ],
+        categories: {
+          '1': 'Medium Shot',
+          '2': 'Handheld / Realistic',
+          '3': '35mm Natural Lens',
+          '4': 'Natural Daylight',
+          '5': 'Centered Symmetric Composition',
+          '6': 'Warm Minimalist Home Interior',
+          '7': 'Speaking Directly to Camera',
+          '8': 'High-End Documentary Style'
+        },
+        audio: true
+      },
+      food_porn: {
+        mode: 'video',
+        ar: '9:16',
+        title: 'Gastronomía / Food Porn Reveal (Video 9:16)',
+        desc: 'Configuración técnica para restaurantes: Dolly push-in en macro extremo a 120fps, iluminación cálida de velas/estudio, vapor ascendente y foley crujiente de cocina.',
+        contextPlaceholder: 'Describe el plato o alimento (ej: Pizza artesanal saliendo del horno de leña con queso derretido estirándose)...',
+        exampleAction: 'A gourmet double smash burger being gently pressed, hot melted cheddar cheese oozing, rising steam, crispy caramelized crust, juicy textures',
+        keywords: [
+          'plato de comida', 'plato', 'comida', 'gastronomia', 'gastronomía', 'hamburguesa', 
+          'burger', 'pizza', 'carne', 'asado', 'parrilla', 'bife', 'pasta', 'restaurante', 
+          'chef', 'receta', 'sushi', 'postre', 'chocolate', 'torta', 'pastel', 'queso derretido', 
+          'food porn', 'foodporn', 'platillo', 'cocinando', 'alimento', 'cafe gourmet', 'café', 'cafe'
+        ],
+        categories: {
+          '1': 'Extreme Close-up',
+          '2': 'Push In (Dolly Zoom In)',
+          '3': 'Macro Lens',
+          '4': 'Intimate Candlelight',
+          '5': 'Centered Symmetric Composition',
+          '7': 'Precision Cooking & Plating',
+          '8': 'High-End Documentary Style',
+          '9': 'Cinematic 120fps Slow Motion'
+        },
+        audio: true
+      },
+      executive_portrait: {
+        mode: 'image',
+        ar: '4:5',
+        title: 'Retrato Ejecutivo / Marca Personal (Foto 4:5)',
+        desc: 'Configuración técnica para fotos de perfil y autoridad: Óptica de 85mm con bokeh cremoso, regla de tercios y luz suave de estudio para proyectar liderazgo.',
+        contextPlaceholder: 'Describe a la persona o rol (ej: Fundador de startup tecnológica con expresión serena y segura en oficina corporativa)...',
+        exampleAction: 'A confident, inspiring company founder in modern executive blazer, warm engaging gaze, standing in a sunlit architectural corporate headquarters',
+        keywords: [
+          'abogado', 'abogada', 'doctor', 'doctora', 'medico', 'médico', 'ejecutivo', 
+          'ejecutiva', 'ceo', 'empresario', 'empresaria', 'director ejecutivo', 'fundador', 
+          'fundadora', 'marca personal', 'foto perfil', 'retrato profesional', 'retrato corporativo', 
+          'foto linkedin', 'linkedin', 'autoridad', 'profesional', 'consultor', 'consultora'
+        ],
+        categories: {
+          '1': 'Close-up',
+          '3': '85mm Portrait Lens',
+          '4': 'Soft Diffused Studio Light',
+          '5': 'Rule of Thirds',
+          '6': 'Corporate Executive Office',
+          '7': 'Nuanced Emotional Micro-Expression',
+          '8': 'High-End Documentary Style'
+        }
+      },
+      hollywood: {
+        mode: 'video',
+        ar: '21:9',
+        title: 'Cine Hollywood 35mm Scope (Video 21:9)',
+        desc: 'Configuración técnica para secuencias narrativas: Lente anamórfica, relación 21:9, movimiento fluido de gimbal, claroscuro y grano Kodak 35mm.',
+        contextPlaceholder: 'Describe la escena dramática (ej: Dos detectives conversando bajo la lluvia en un muelle oscuro)...',
+        exampleAction: 'An intense suspenseful dialogue moment between two rival operatives in a rain-soaked industrial harbor warehouse under flickering halogen work lights',
+        keywords: [
+          'cine', 'pelicula', 'película', 'hollywood', 'escena dramatica', 'escena dramática', 
+          'cinematografico', 'cinematográfico', 'detective', 'film 35mm', 'cine 35mm', 'trailer', 
+          'tráiler', 'guerrero', 'batalla', 'suspenso', 'thriller', 'accion', 'acción'
+        ],
+        categories: {
+          '1': 'Medium Shot',
+          '2': 'Gimbal Smooth',
+          '3': 'Anamorphic Lens Look',
+          '4': 'Dramatic Chiaroscuro',
+          '5': 'Rule of Thirds',
+          '8': 'Cinematic 35mm Film Look (Kodak Color Grade)',
+          '9': 'Volumetric Smoke & Atmospheric VFX Particles'
+        },
+        audio: true
+      },
+      cyberpunk: {
+        mode: 'video',
+        ar: '16:9',
+        title: 'Cyberpunk Neón & Dark Tech (Video 16:9)',
+        desc: 'Configuración técnica para mundos sci-fi: Órbita 360°, lente anamórfica con destellos horizontales, neón cian/magenta y lluvia con partículas volumétricas.',
+        contextPlaceholder: 'Describe tu personaje o entorno futurista (ej: Drone repartidor sobrevolando rascacielos con hologramas gigantes)...',
+        exampleAction: 'A cybernetic operative standing on a high-rise catwalk overlooking Neo-Tokyo under heavy rain with glowing cyan and magenta hologram reflections',
+        keywords: [
+          'cyberpunk', 'ciberpunk', 'neon', 'neón', 'neones', 'ciudad futurista', 'sci-fi', 
+          'lluvia neon', 'megaciudad', 'androide', 'cyborg', 'distopico', 'distópico', 
+          'holograma', 'hologramas', 'neo tokyo', 'neo-tokyo'
+        ],
+        categories: {
+          '1': 'Wide Shot',
+          '2': 'Orbit / Circular',
+          '3': 'Anamorphic Lens Look',
+          '4': 'Neon Cyberpunk Lighting',
+          '6': 'Futuristic Cyberpunk Megacity',
+          '8': 'Dark Gritty Cyberpunk Aesthetic',
+          '9': 'Volumetric Smoke & Atmospheric VFX Particles'
+        },
+        audio: true
+      },
+      aidan_tech: {
+        mode: 'video',
+        ar: '16:9',
+        title: 'Automatización & Tech (A\\DAN SOLUTIONS)',
+        desc: 'Configuración técnica para demos de software y transformación digital: Tracking frontal, lente 24mm, iluminación neón cian y efecto de transformación antes/después.',
+        contextPlaceholder: 'Describe el proceso de transformación (ej: Facturas en papel desordenadas convirtiéndose en gráficos interactivos en tiempo real)...',
+        exampleAction: 'A high-tech digital control center where disorganized paper receipts and chaotic spreadsheets fluidly dissolve into an automated glowing holographic enterprise dashboard',
+        keywords: [
+          'automatizacion', 'automatización', 'aidan', 'a\\dan', 'caos a control', 'dashboard', 
+          'software', 'ia empresas', 'agentes ia', 'transformacion digital', 'transformación digital', 
+          'desorden a orden', 'holografico tech', 'oficina moderna', 'pantalla holográfica', 'laptop'
+        ],
+        categories: {
+          '1': 'Wide Shot',
+          '2': 'Tracking Forward',
+          '3': '24mm Cinematic Lens',
+          '4': 'Neon Cyberpunk Lighting',
+          '5': 'Dynamic Diagonal Composition',
+          '6': 'Modern High-Tech Metropolis',
+          '7': 'Before & After Cinematic Transformation',
+          '8': 'Dark Gritty Cyberpunk Aesthetic',
+          '9': 'Volumetric Smoke & Atmospheric VFX Particles'
+        },
+        audio: true
+      }
+    };
+
+    const baselineDefinition = {
+      title: 'Dirección Cinemática Estándar',
+      desc: 'Plano medio cinematográfico, Push In suave, lente 35mm natural, luz diurna y regla de tercios.',
+      categories: {
+        '1': 'Medium Shot',
+        '2': 'Push In (Dolly Zoom In)',
+        '3': '35mm Natural Lens',
+        '4': 'Natural Daylight',
+        '5': 'Rule of Thirds',
+        '8': 'Cinematic 35mm Film Look (Kodak Color Grade)'
+      }
+    };
+
+    // MANUAL TEÓRICO EN 3 IDIOMAS (ESTRUCTURADO Y OPTIMIZADO)
+    const manualData = {
+      es: `
+        <div class="space-y-4 text-slate-300">
+          <div class="p-4 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+            <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">1. De "Keywords" a Dirección Técnica</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Los modelos fundacionales de Google (<strong>Gemini Omni Flash 1.1</strong>, <strong>Veo</strong> y <strong>Nano Banana 2</strong>) ya no responden a etiquetas inconexas como <em>"8k, cinematic lighting"</em>. Esta herramienta traduce la intención creativa a <strong>prosa técnica estructurada</strong> de cámara, óptica e iluminación real.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-indigo-400 font-bold text-xs uppercase mb-1">🎬 Video (Omni Flash 1.1 & Veo)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Interpreta la cinemática en movimiento (gimbal, dolly, tracking, timelapse) y genera una capa de <strong>Audio Nativo Sincronizado</strong> con sonido ambiente y foley diegético.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">📸 Foto 4K (Nano Banana 2 / Imagen 3)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Enfoca el algoritmo en la <strong>física óptica de lentes reales</strong> (35mm, 85mm portrait, bokeh f/1.4, micro-texturas y color grading analógico de 35mm).
+              </p>
+            </div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+            <h4 class="text-emerald-400 font-bold text-xs uppercase mb-1">🌐 Traducción Automática y Diálogos</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Redacta en tu idioma habitual. El motor ensambla las directivas técnicas en inglés cinematográfico formal, garantizando máxima obediencia sin ambigüedades en Google AI Studio.
+            </p>
+          </div>
+        </div>
+      `,
+      en: `
+        <div class="space-y-4 text-slate-300">
+          <div class="p-4 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+            <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">1. From Tags to Technical Direction</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Next-generation Google foundation models (<strong>Gemini Omni Flash 1.1</strong>, <strong>Veo</strong>, and <strong>Nano Banana 2</strong>) demand coherent narrative syntax and physical cinematography directives rather than disjointed comma tags.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-indigo-400 font-bold text-xs uppercase mb-1">🎬 Video (Omni Flash 1.1 & Veo)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Applies authentic camera movements and a synchronized diegetic audio foley layer matching physical scene interactions.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">📸 Photo 4K (Nano Banana 2)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Optimizes focal distance, depth of field, tactile surface textures, and 35mm analog film color grade.
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+      pt: `
+        <div class="space-y-4 text-slate-300">
+          <div class="p-4 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+            <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">1. De Palavras-chave a Direção Técnica</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Os modelos generativos do Google (<strong>Gemini Omni Flash 1.1</strong>, <strong>Veo</strong> e <strong>Nano Banana 2</strong>) processam sintaxe contínua em prosa cinematográfica ao invés de listas de tags soltas.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-indigo-400 font-bold text-xs uppercase mb-1">🎬 Vídeo (Omni Flash 1.1)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Ativa movimentos cinemáticos de câmera e camada de áudio foley diegético sincronizado com a cena.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#0B0F19] border border-[#232D42]">
+              <h4 class="text-[#00D2FF] font-bold text-xs uppercase mb-1">📸 Foto 4K (Nano Banana 2)</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Foco total na física de lentes reais, profundidade de campo, nitidez e gradação de cores analógicas.
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    // ============================================================
+    // SISTEMA AUTO-DIRECTOR INTELIGENTE UNIFICADO
+    // ============================================================
+    let autoDirectorActive = true;
+    let userManuallyTouched = {};
+    let autoDirectorDebounceTimer = null;
+
+    function detectPresetFromText(text) {
+      const clean = text.toLowerCase();
+      let bestMatch = null;
+      let maxScore = 0;
+
+      for (const presetKey in presetDefinitions) {
+        const preset = presetDefinitions[presetKey];
+        if (!preset.keywords) continue;
+        let score = 0;
+        for (const kw of preset.keywords) {
+          if (clean.includes(kw)) {
+            score += kw.length * 2 + (kw.includes(' ') ? 4 : 0);
+          }
+        }
+        if (score > maxScore) {
+          maxScore = score;
+          bestMatch = presetKey;
+        }
+      }
+      return maxScore > 0 ? bestMatch : null;
+    }
+
+    function applyBaselineCinematic() {
+      if (userLockedPreset) return;
+      const badge = document.getElementById('autodirector_detection_badge');
+      const iconEl = document.getElementById('autodirector_badge_icon');
+      const titleEl = document.getElementById('autodirector_badge_theme');
+      const descEl = document.getElementById('autodirector_badge_desc');
+      
+      if (badge) {
+        badge.classList.remove('hidden');
+        if (iconEl) iconEl.textContent = '✨';
+        if (titleEl) titleEl.textContent = baselineDefinition.title;
+        if (descEl) descEl.textContent = `• ${baselineDefinition.desc}`;
+      }
+
+      for (let catId = 1; catId <= 9; catId++) {
+        const catKey = String(catId);
+        if (userManuallyTouched[catKey]) continue;
+
+        let recommendedVal = baselineDefinition.categories[catKey];
+        if (currentMode === 'image' && catId === 2) recommendedVal = null;
+
+        const chk = document.getElementById(`check_cat${catId}`);
+        const select = document.getElementById(`val_cat${catId}`);
+
+        if (recommendedVal) {
+          if (chk) chk.checked = true;
+          toggleBox(`cat${catId}`, false, true);
+          if (select) {
+            for (let opt of select.options) {
+              if (opt.value === recommendedVal || opt.value.includes(recommendedVal)) {
+                opt.selected = true;
+                break;
+              }
+            }
+          }
+        } else {
+          if (chk) chk.checked = false;
+          toggleBox(`cat${catId}`, false, true);
+        }
+      }
+    }
+
+    // ============================================================
+    // MOTOR DE TRADUCCIÓN A INGLÉS CINEMATOGRÁFICO
+    // ============================================================
+    const actionTranslationCache = {};
+    let translationDebounceTimer = null;
+
+    const cinematicDictionary = [
+      [/un frasco de perfume negro de lujo/gi, "a luxury black perfume bottle"],
+      [/un frasco de perfume de lujo/gi, "a luxury perfume bottle"],
+      [/un frasco de perfume/gi, "a perfume bottle"],
+      [/frasco de perfume/gi, "perfume bottle"],
+      [/perfume de lujo/gi, "luxury perfume"],
+      [/perfume/gi, "perfume"],
+      [/botella de vino/gi, "wine bottle"],
+      [/botella de vidrio/gi, "glass bottle"],
+      [/lata de bebida/gi, "beverage can"],
+      [/lata de soda/gi, "soda can"],
+      [/lata/gi, "aluminum can"],
+      [/zapatilla de cuero/gi, "leather sneaker"],
+      [/zapatillas deportivas/gi, "athletic sneakers"],
+      [/zapatillas/gi, "sneakers"],
+      [/zapatilla/gi, "sneaker"],
+      [/calzado deportivo/gi, "athletic footwear"],
+      [/reloj cron[oó]grafo de lujo/gi, "luxury chronograph wristwatch"],
+      [/reloj cron[oó]grafo/gi, "chronograph wristwatch"],
+      [/reloj de lujo/gi, "luxury wristwatch"],
+      [/reloj/gi, "wristwatch"],
+      [/joya de oro/gi, "gold jewelry"],
+      [/anillo de diamantes/gi, "diamond ring"],
+      [/anillo de oro/gi, "gold ring"],
+      [/collar de perlas/gi, "pearl necklace"],
+      [/collar/gi, "necklace"],
+      [/crema facial/gi, "facial cream jar"],
+      [/crema cosm[eé]tica/gi, "cosmetic cream"],
+      [/frasco cosm[eé]tico/gi, "cosmetic jar"],
+      [/s[eé]rum facial/gi, "facial serum dropper bottle"],
+      [/sobre un pedestal de piedra/gi, "on a dark stone pedestal"],
+      [/sobre un pedestal de m[aá]rmol/gi, "on a white marble pedestal"],
+      [/sobre un pedestal/gi, "on an elegant pedestal"],
+      [/sobre un podio/gi, "on a reflective podium"],
+      [/sobre agua cristalina/gi, "over crystal clear water"],
+      [/agua cristalina/gi, "crystal clear water"],
+      [/con gotas de agua/gi, "with fine water droplets"],
+      [/gotas de agua cayendo/gi, "falling water droplets"],
+      [/gotas de agua/gi, "fine water droplets"],
+      [/salpicaduras de agua/gi, "water splashes"],
+      [/un dron sobrevolando/gi, "a drone flying over"],
+      [/vuelo de dron sobre/gi, "aerial drone flight over"],
+      [/vista a[eé]rea de dron sobre/gi, "aerial drone shot over"],
+      [/vista a[eé]rea de/gi, "aerial view of"],
+      [/vista a[eé]rea/gi, "aerial view"],
+      [/monta[nñ]as nevadas/gi, "snow-capped alpine mountain peaks"],
+      [/monta[nñ]a nevada/gi, "snow-capped mountain"],
+      [/cordillera/gi, "mountain range"],
+      [/bosque de pinos/gi, "pine forest"],
+      [/selva tropical/gi, "tropical rainforest"],
+      [/playa paradis[ií]aca/gi, "tropical paradise beach"],
+      [/playa con olas turquesa/gi, "beach with vibrant turquoise waves"],
+      [/playa/gi, "beach coastline"],
+      [/mar turquesa/gi, "turquoise ocean"],
+      [/oc[eé]ano/gi, "ocean"],
+      [/cascada/gi, "majestic waterfall"],
+      [/acantilado/gi, "dramatic coastal cliff"],
+      [/al atardecer/gi, "at golden hour sunset"],
+      [/al amanecer/gi, "at sunrise dawn"],
+      [/en la noche/gi, "at night under city lights"],
+      [/de noche/gi, "at night"],
+      [/bajo la lluvia torrencial/gi, "under heavy rain"],
+      [/bajo la lluvia/gi, "in the rain"],
+      [/calle mojada/gi, "wet asphalt street with reflections"],
+      [/hamburguesa con queso derretido/gi, "gourmet smash burger with melted oozing cheese"],
+      [/hamburguesa gourmet/gi, "gourmet artisan burger"],
+      [/hamburguesa/gi, "juicy gourmet burger"],
+      [/queso derretido/gi, "hot melted cheese"],
+      [/carne a la parrilla/gi, "sizzling grilled steak"],
+      [/taza de caf[eé] espresso/gi, "hot espresso coffee cup with rising steam"],
+      [/taza de caf[eé]/gi, "hot cup of coffee with steam"],
+      [/caf[eé] espresso/gi, "rich espresso coffee"],
+      [/vapor ascendente/gi, "rising aromatic steam"],
+      [/persona hablando a c[aá]mara/gi, "charismatic person speaking directly to camera"],
+      [/hablando a c[aá]mara/gi, "speaking directly to camera"],
+      [/creador de contenido/gi, "content creator"],
+      [/creadora de contenido/gi, "female content creator"],
+      [/oficina corporativa moderna/gi, "modern architectural corporate office"],
+      [/oficina moderna/gi, "modern office"],
+      [/ejecutivo trabajando/gi, "focused executive working"],
+      [/ejecutiva/gi, "business executive"],
+      [/ejecutivo/gi, "business executive"],
+      [/laptop moderna/gi, "sleek modern laptop"],
+      [/pantalla hologr[aá]fica/gi, "holographic dashboard screen"],
+      [/ciudad futurista cyberpunk/gi, "futuristic cyberpunk megacity"],
+      [/ciudad futurista/gi, "futuristic city"],
+      [/luces de ne[oó]n cian y magenta/gi, "cyan and magenta neon lighting"],
+      [/luces de ne[oó]n/gi, "glowing neon lights"],
+      [/coche deportivo a toda velocidad/gi, "high-speed sports car drifting"],
+      [/auto deportivo/gi, "luxury sports car"],
+      [/coche deportivo/gi, "luxury sports car"]
+    ];
+
+    function isLikelyEnglish(text) {
+      const clean = ' ' + text.toLowerCase().replace(/[^a-záéíóúñãõç]/g, ' ') + ' ';
+      const commonNonEnglish = [
+        ' el ', ' la ', ' los ', ' las ', ' un ', ' una ', ' unos ', ' unas ', 
+        ' de ', ' del ', ' en ', ' con ', ' sobre ', ' y ', ' por ', ' para ', 
+        ' es ', ' está ', ' que ', ' al ', ' se ', ' o ', ' da ', ' do ', ' em ',
+        ' frasco ', ' botella ', ' zapatilla ', ' reloj ', ' persona ', ' noche ',
+        ' comida ', ' playa ', ' montaña '
+      ];
+      for (const word of commonNonEnglish) {
+        if (clean.includes(word)) return false;
+      }
+      return true;
+    }
+
+    function localTranslateCinematic(text) {
+      let result = text;
+      for (const [pattern, replacement] of cinematicDictionary) {
+        result = result.replace(pattern, replacement);
+      }
+      return result;
+    }
+
+    function updateTranslationBadge(statusText) {
+      const badge = document.getElementById('badge_translation_status');
+      const textEl = document.getElementById('translation_status_text');
+      if (badge && textEl) {
+        if (statusText) {
+          badge.classList.remove('hidden');
+          textEl.textContent = statusText;
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    // ============================================================
+    // MOTOR DE DIÁLOGOS Y FONÉTICA EN ESPAÑOL LATINO NEUTRO
+    // ============================================================
+    function extractDialogueInfo(rawText) {
+      if (!rawText) return { maskedText: '', dialogues: [], hasSpeechIntent: false };
+
+      let dialogues = [];
+      let maskedText = rawText;
+
+      const quoteRegex = /["“«]([^"”»\n\r]+)["”»]/g;
+      maskedText = maskedText.replace(quoteRegex, (match, p1) => {
+        const trimmed = p1.trim();
+        if (trimmed.length > 0) {
+          dialogues.push(trimmed);
+          return `__SPANISH_SPEECH_${dialogues.length - 1}__`;
+        }
+        return match;
+      });
+
+      if (dialogues.length === 0) {
+        const speechVerbRegex = /(?:diciendo|dice|habla diciendo|que dice|con el mensaje)[:\s]+([^,.;\n\r]+)/i;
+        const match = maskedText.match(speechVerbRegex);
+        if (match && match[1] && match[1].trim().length > 2) {
+          const phrase = match[1].trim();
+          dialogues.push(phrase);
+          maskedText = maskedText.replace(phrase, `__SPANISH_SPEECH_0__`);
+        }
+      }
+
+      const speechIntentRegex = /(habl(?:a|ando|an)|diciendo|dice|voz|locuci[oó]n|testimonial|en espa[ñn]ol|latino|a c[aá]mara)/i;
+      const hasSpeechIntent = dialogues.length > 0 || speechIntentRegex.test(rawText);
+
+      return { maskedText, dialogues, hasSpeechIntent };
+    }
+
+    function restoreDialogueInfo(translatedText, dialogues) {
+      let result = translatedText;
+      dialogues.forEach((dlg, idx) => {
+        const token = `__SPANISH_SPEECH_${idx}__`;
+        const replacement = `speaking in authentic native Latin American Spanish: "${dlg}"`;
+        result = result.split(token).join(replacement);
+      });
+      return result;
+    }
+
+    function updateSpeechBadge(active) {
+      const badge = document.getElementById('badge_speech_status');
+      if (badge) {
+        if (active) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+      }
+    }
+
+    function getEnglishAction(rawAction) {
+      if (!rawAction) {
+        updateTranslationBadge('');
+        updateSpeechBadge(false);
+        return '';
+      }
+
+      const speechInfo = extractDialogueInfo(rawAction);
+      updateSpeechBadge(speechInfo.hasSpeechIntent || speechInfo.dialogues.length > 0);
+
+      if (actionTranslationCache[rawAction]) {
+        updateTranslationBadge('100% Technical English ✨');
+        return actionTranslationCache[rawAction];
+      }
+
+      if (isLikelyEnglish(speechInfo.maskedText)) {
+        updateTranslationBadge('100% Technical English ✨');
+        const restored = restoreDialogueInfo(speechInfo.maskedText, speechInfo.dialogues);
+        actionTranslationCache[rawAction] = restored;
+        return restored;
+      }
+      
+      requestEnglishTranslation(rawAction, speechInfo);
+      
+      const localMasked = localTranslateCinematic(speechInfo.maskedText);
+      const localRestored = restoreDialogueInfo(localMasked, speechInfo.dialogues);
+      updateTranslationBadge('Traduciendo al inglés...');
+      return localRestored;
+    }
+
+    async function requestEnglishTranslation(rawText, speechInfo) {
+      const clean = rawText.trim();
+      if (!clean || clean.length < 3 || actionTranslationCache[clean]) return;
+
+      const info = speechInfo || extractDialogueInfo(clean);
+
+      clearTimeout(translationDebounceTimer);
+      translationDebounceTimer = setTimeout(async () => {
+        try {
+          updateTranslationBadge('Traduciendo al inglés...');
+          const langPair = (currentLang === 'pt') ? 'pt|en' : 'es|en';
+          const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(info.maskedText)}&langpair=${langPair}`;
+
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timer);
+
+          if (res.ok) {
+            const json = await res.json();
+            let translated = json?.responseData?.translatedText;
+            if (translated && !translated.includes('MYMEMORY WARNING') && translated.length > 0) {
+              const txt = document.createElement('textarea');
+              txt.innerHTML = translated;
+              translated = txt.value;
+
+              const finalEnglish = restoreDialogueInfo(translated, info.dialogues);
+              actionTranslationCache[clean] = finalEnglish;
+              updateTranslationBadge('100% Technical English ✨');
+
+              const currentInput = document.getElementById('mainAction').value.trim();
+              if (currentInput === clean) {
+                generatePrompt();
+              }
+            }
+          }
+        } catch (err) {
+          updateTranslationBadge('100% Technical English ✨');
+        }
+      }, 300);
+    }
+
+    function handleMainActionInput(text) {
+      clearTimeout(autoDirectorDebounceTimer);
+      autoDirectorDebounceTimer = setTimeout(() => {
+        const trimmed = text.trim();
+        const badge = document.getElementById('autodirector_detection_badge');
+
+        if (!trimmed) {
+          if (badge) badge.classList.add('hidden');
+          updateTranslationBadge('');
+          if (!userLockedPreset) {
+            clearObjective(false);
+          }
+          generatePrompt();
+          return;
+        }
+
+        if (autoDirectorActive && !userLockedPreset) {
+          const detectedKey = detectPresetFromText(trimmed);
+          if (detectedKey) {
+            if (activePresetId !== detectedKey) {
+              applyPreset(detectedKey, false);
+            }
+          } else {
+            if (activePresetId) {
+              clearObjective(false);
+            }
+            applyBaselineCinematic();
+          }
+        }
+
+        generatePrompt();
+        requestEnglishTranslation(trimmed);
+      }, 180);
+    }
+
+    function toggleAutoDirector() {
+      autoDirectorActive = !autoDirectorActive;
+      const btn = document.getElementById('btn_toggle_autodirector');
+      const statusText = document.getElementById('autodirector_status_text');
+      const icon = document.getElementById('autodirector_icon');
+      const badge = document.getElementById('autodirector_detection_badge');
+
+      if (autoDirectorActive) {
+        btn.className = "text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border border-[#00D2FF]/40 bg-cyan-950/60 text-[#00D2FF] font-mono flex items-center gap-1.5 transition hover:bg-cyan-900/60 cursor-pointer shadow-sm";
+        if (statusText) statusText.textContent = "Auto-Director: ON";
+        if (icon) icon.textContent = "✨";
+        userManuallyTouched = {};
+        const actionVal = document.getElementById('mainAction').value.trim();
+        if (actionVal) {
+          const detected = detectPresetFromText(actionVal);
+          if (detected) applyPreset(detected, false);
+          else applyBaselineCinematic();
+        }
+      } else {
+        btn.className = "text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-slate-400 font-mono flex items-center gap-1.5 transition hover:bg-slate-800 cursor-pointer";
+        if (statusText) statusText.textContent = "Auto-Director: OFF";
+        if (icon) icon.textContent = "⏸️";
+        if (badge) badge.classList.add('hidden');
+      }
+      generatePrompt();
+    }
+
+    function initApp() {
+      try {
+        populateCategories();
+        applyLanguage(currentLang);
+        setMediaType('video');
+      } catch (err) {
+        console.error('Error durante la inicialización visual:', err);
+      }
+      
+      // Inicializar y verificar sesión / Whitelist en Supabase
+      checkAuthAndWhitelist();
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+
+    // Temporizador de seguridad: si por lentitud de red o bloqueo de CDN
+    // el loader siguiera visible después de 3.5 segundos, forzar el login screen
+    setTimeout(() => {
+      const loader = document.getElementById('auth-loading');
+      const appPrompts = document.getElementById('app-prompts');
+      const loginScreen = document.getElementById('login-screen');
+      if (loader && !loader.classList.contains('hidden') && appPrompts && appPrompts.classList.contains('hidden')) {
+        loader.classList.add('hidden');
+        if (loginScreen) loginScreen.classList.remove('hidden');
+      }
+    }, 3500);
+
+    // Poblar menús desplegables
+    function populateCategories() {
+      for (let catKey in guideItems) {
+        const select = document.getElementById(`val_${catKey}`);
+        if (!select) continue;
+
+        const currentVal = select.value;
+        select.innerHTML = '';
+
+        const items = guideItems[catKey];
+        items.forEach(item => {
+          if (currentMode === 'image' && item.videoOnly) {
+            return;
+          }
+
+          const opt = document.createElement('option');
+          opt.value = item.en;
+          const label = item[currentLang] || item.es;
+          opt.textContent = `${item.id}. ${label}`;
+
+          if (currentVal && currentVal === item.en) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // Cambiar Idioma de Interfaz
+    function changeLanguage(lang) {
+      currentLang = lang;
+      applyLanguage(lang);
+      populateCategories();
+    }
+
+    function applyLanguage(lang) {
+      const texts = i18n[lang];
+      document.getElementById('ui_subtitle').textContent = texts.subtitle;
+      document.getElementById('ui_btn_reset').innerHTML = `<span>🔄</span> <span>${texts.btn_reset}</span>`;
+      document.getElementById('ui_target_label').textContent = texts.target_label;
+      document.getElementById('ui_target_badge').textContent = texts.target_badge;
+      document.getElementById('ui_mode_video').textContent = texts.mode_video;
+      document.getElementById('ui_mode_image').textContent = texts.mode_image;
+      
+      // Label principal con pulso
+      const labelEl = document.getElementById('ui_action_label');
+      labelEl.innerHTML = `<span class="flex h-2 w-2 rounded-full bg-[#00D2FF] animate-pulse"></span> ${texts.action_label}`;
+      
+      document.getElementById('ui_required').textContent = texts.required;
+      document.getElementById('mainAction').placeholder = texts.action_placeholder;
+      document.getElementById('ui_action_hint').textContent = texts.action_hint;
+      document.getElementById('ui_categories_title').textContent = texts.categories_title;
+      document.getElementById('ui_categories_subtitle').textContent = texts.categories_subtitle;
+      document.getElementById('ui_audio_title').innerHTML = `<span>🎧</span> ${texts.audio_title}`;
+      document.getElementById('ui_audio_desc').textContent = texts.audio_desc;
+      document.getElementById('ui_btn_generate').innerHTML = `<span>⚡</span> <span>${texts.btn_generate}</span>`;
+      document.getElementById('ui_output_title').textContent = texts.output_title;
+      document.getElementById('copyLabel').textContent = texts.copy_label;
+      document.getElementById('ui_output_placeholder').textContent = texts.output_placeholder;
+      document.getElementById('ui_engine_note').textContent = texts.engine_note;
+      document.getElementById('ui_engine_desc').textContent = texts.engine_desc;
+
+      // Títulos de tarjetas
+      for (let i = 1; i <= 9; i++) {
+        const lbl = document.getElementById(`label_cat${i}`);
+        if (lbl) lbl.textContent = texts.cat_titles[`cat${i}`];
+      }
+
+      // Manual dinámico
+      document.getElementById('manual_header_title').textContent = texts.manual_title;
+      document.getElementById('manual_header_subtitle').textContent = texts.manual_subtitle;
+      document.getElementById('manualDynamicContent').innerHTML = manualData[lang];
+
+      // Actualizar badge de Auto-Director al cambiar de idioma
+      const actionVal = document.getElementById('mainAction').value.trim();
+      if (actionVal && autoDirectorActive && !activePresetId) {
+        applyBaselineCinematic();
+      }
+    }
+
+    // Conmutar Modo Video vs Imagen
+    function setMediaType(mode, skipPrompt = false) {
+      currentMode = mode;
+      const btnVideo = document.getElementById('btn_mode_video');
+      const btnImage = document.getElementById('btn_mode_image');
+      const cardCat2 = document.getElementById('card_cat2');
+      const audioWrap = document.getElementById('audioWrapper');
+      const targetEngineBadge = document.getElementById('outputTargetEngine');
+      const badgeEngine = document.getElementById('badge_engine');
+
+      if (mode === 'video') {
+        btnVideo.className = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 gradient-btn-primary text-[#0B0F19] shadow-glow-cyan";
+        btnImage.className = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 bg-[#0B0F19] border border-[#232D42] text-[#94A3B8] hover:text-white hover:border-[#00D2FF]/50";
+        cardCat2.classList.remove('hidden');
+        audioWrap.classList.remove('hidden');
+        targetEngineBadge.textContent = "Gemini Omni Flash 1.1 / Google Veo";
+        badgeEngine.textContent = "Gemini Omni Flash 1.1 (Video)";
+      } else {
+        btnImage.className = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 gradient-btn-primary text-[#0B0F19] shadow-glow-cyan";
+        btnVideo.className = "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 bg-[#0B0F19] border border-[#232D42] text-[#94A3B8] hover:text-white hover:border-[#00D2FF]/50";
+        cardCat2.classList.add('hidden');
+        document.getElementById('check_cat2').checked = false;
+        toggleBox('cat2');
+        audioWrap.classList.add('hidden');
+        targetEngineBadge.textContent = "Nano Banana 2 / Imagen 3";
+        badgeEngine.textContent = "Nano Banana 2 (Imagen 4K)";
+      }
+
+      populateCategories();
+      if (!skipPrompt) if (!skipPrompt) autoUpdatePrompt();
+    }
+
+    // Toggle Checkbox de Categoría
+    function toggleBox(catKey, fromUser = false, skipPrompt = false) {
+      const isChecked = document.getElementById(`check_${catKey}`).checked;
+      const body = document.getElementById(`body_${catKey}`);
+      const card = document.getElementById(`card_${catKey}`);
+      
+      if (isChecked) {
+        body.classList.remove('hidden');
+        card.classList.add('cat-card-active');
+      } else {
+        body.classList.add('hidden');
+        card.classList.remove('cat-card-active');
+      }
+
+      if (fromUser) {
+        const catNum = catKey.replace('cat', '');
+        userManuallyTouched[catNum] = true;
+      }
+
+      if (!skipPrompt) autoUpdatePrompt();
+    }
+
+    // Cambio manual de opción en el menú desplegable
+    function onCategorySelectChange(catKey) {
+      const catNum = catKey.replace('cat', '');
+      userManuallyTouched[catNum] = true;
+      if (!skipPrompt) autoUpdatePrompt();
+    }
+
+    // Actualización automática si ya hay texto
+    function autoUpdatePrompt() {
+      const action = document.getElementById('mainAction').value.trim();
+      if (action) {
+        generatePrompt();
+      }
+    }
+
+    // Generar Prompt Cinematográfico en Inglés Técnico
+    function generatePrompt() {
+      const action = document.getElementById('mainAction').value.trim();
+      const output = document.getElementById('outputBox');
+      const texts = i18n[currentLang];
+      const ar = document.getElementById('aspectRatioSelect').value;
+
+      if (!action) {
+        output.innerHTML = `<span class="text-rose-400 font-sans font-medium">${texts.warning_empty}</span>`;
+        updateMetrics('');
+        return;
+      }
+
+      const getVal = (catKey) => {
+        const chk = document.getElementById(`check_${catKey}`);
+        return (chk && chk.checked) ? document.getElementById(`val_${catKey}`).value : null;
+      };
+
+      const shot = getVal('cat1');
+      const camera = (currentMode === 'video') ? getVal('cat2') : null;
+      const lens = getVal('cat3');
+      const lighting = getVal('cat4');
+      const composition = getVal('cat5');
+      const location = getVal('cat6');
+      const subjects = getVal('cat7');
+      const style = getVal('cat8');
+      const effects = getVal('cat9');
+      const speechInfo = extractDialogueInfo(action);
+      const hasAudio = (currentMode === 'video') && (document.getElementById('check_audio').checked || speechInfo.dialogues.length > 0 || speechInfo.hasSpeechIntent);
+
+      if (currentMode === 'video' && (speechInfo.dialogues.length > 0 || speechInfo.hasSpeechIntent)) {
+        const chkAudio = document.getElementById('check_audio');
+        if (chkAudio && !chkAudio.checked) {
+          chkAudio.checked = true;
+        }
+      }
+
+      let promptParts = [];
+
+      // Acción principal traducida a inglés técnico cinematográfico (100% en inglés)
+      const englishAction = getEnglishAction(action);
+      let core = englishAction.endsWith('.') ? englishAction : englishAction + '.';
+
+      if (currentMode === 'video') {
+        promptParts.push(`Cinematic video sequence (${ar} aspect ratio): ${core}`);
+
+        let staging = [];
+        if (location) staging.push(`situated in a ${location.toLowerCase()}`);
+        if (subjects) staging.push(`depicting dynamic ${subjects.toLowerCase()}`);
+        if (composition) staging.push(`composed utilizing ${composition.toLowerCase()}`);
+        if (staging.length > 0) promptParts.push(`Scene framing: The environment is ${staging.join(', ')}.`);
+
+        let camDirectives = [];
+        if (shot) camDirectives.push(`${shot.toLowerCase()}`);
+        if (camera) camDirectives.push(`executed with a ${camera.toLowerCase()}`);
+        if (lens) camDirectives.push(`shot through a ${lens.toLowerCase()} with authentic optical characteristics`);
+        if (camDirectives.length > 0) promptParts.push(`Cinematography: Captured as a ${camDirectives.join(', ')}.`);
+
+        let aesthetic = [];
+        if (lighting) aesthetic.push(`${lighting.toLowerCase()}`);
+        if (style) aesthetic.push(`graded in a ${style.toLowerCase()}`);
+        if (effects) aesthetic.push(`featuring ${effects.toLowerCase()}`);
+        aesthetic.push("24fps film cadence, photorealistic physics");
+        promptParts.push(`Visual aesthetic: Illuminated with ${aesthetic.join(', ')}.`);
+
+        if (hasAudio) {
+          if (speechInfo.dialogues.length > 0 || speechInfo.hasSpeechIntent) {
+            let dialogueDirective = speechInfo.dialogues.length > 0 
+              ? ` Spoken dialogue line articulated in crystal-clear native Latin American Spanish: "${speechInfo.dialogues.join(' ')}".`
+              : '';
+            promptParts.push(`Audio: High-fidelity synchronized vocal performance in authentic native Latin American Spanish (Español Latino Neutro) with crystal-clear human diction, warm conversational cadence, zero foreign English accent or robotic distortion, flawless lip-sync facial articulation; layered with natural room acoustics and organic diegetic foley sound, no background music.${dialogueDirective}`);
+          } else {
+            promptParts.push(`Audio: High-fidelity diegetic ambient audio and synchronized foley sound matching every physical interaction in the scene, studio-grade soundscape, no background music.`);
+          }
+        }
+
+      } else {
+        promptParts.push(`A high-end professional still photograph (${ar} aspect ratio) capturing ${core}`);
+
+        if (speechInfo.dialogues.length > 0) {
+          promptParts.push(`Subject Expression: Showing natural expressive articulation as if speaking in Spanish: "${speechInfo.dialogues.join(' ')}".`);
+        }
+
+        let visualElements = [];
+        if (shot) visualElements.push(`${shot.toLowerCase()}`);
+        if (composition) visualElements.push(`framed with ${composition.toLowerCase()}`);
+        if (lens) visualElements.push(`photographed with a ${lens.toLowerCase()} delivering sharp subject isolation`);
+        if (visualElements.length > 0) promptParts.push(`Composition & Optics: ${visualElements.join(', ')}.`);
+
+        let environmentElements = [];
+        if (location) environmentElements.push(`set in a realistic ${location.toLowerCase()}`);
+        if (lighting) environmentElements.push(`bathed in ${lighting.toLowerCase()}`);
+        if (subjects) environmentElements.push(`showcasing ${subjects.toLowerCase()}`);
+        if (environmentElements.length > 0) promptParts.push(`Environment & Lighting: ${environmentElements.join(', ')}.`);
+
+        let renderStyle = [];
+        if (style) renderStyle.push(`${style.toLowerCase()}`);
+        if (effects) renderStyle.push(`${effects.toLowerCase()}`);
+        renderStyle.push("ultra-detailed textures, 4K UHD, authentic analog film color grade");
+        promptParts.push(`Aesthetic: ${renderStyle.join(', ')}.`);
+      }
+
+      const finalPrompt = promptParts.join(' ');
+      output.innerText = finalPrompt;
+      updateMetrics(finalPrompt);
+    }
+
+    // Contadores de caracteres y tokens estimados
+    function updateMetrics(text) {
+      const charCountEl = document.getElementById('charCount');
+      const tokenEstEl = document.getElementById('tokenEst');
+      if (!text) {
+        charCountEl.textContent = '0 caracteres';
+        tokenEstEl.textContent = '~0 tokens';
+        return;
+      }
+      charCountEl.textContent = `${text.length} caracteres`;
+      const estTokens = Math.ceil(text.length / 4);
+      tokenEstEl.textContent = `~${estTokens} tokens`;
+    }
+
+    // Copiar Prompt al Portapapeles
+    function copyPrompt() {
+      const output = document.getElementById('outputBox').innerText;
+      const texts = i18n[currentLang];
+      if (!output || output.includes(texts.output_placeholder) || output.includes('⚠️')) return;
+
+      navigator.clipboard.writeText(output).then(() => {
+        const label = document.getElementById('copyLabel');
+        const icon = document.getElementById('copyIcon');
+        const btn = document.getElementById('copyBtn');
+        
+        label.textContent = texts.copy_success;
+        icon.textContent = '✅';
+        btn.classList.add('bg-emerald-600');
+        
+        setTimeout(() => {
+          label.textContent = texts.copy_label;
+          icon.textContent = '📋';
+          btn.classList.remove('bg-emerald-600');
+        }, 2000);
+      });
+    }
+
+    // Aplicar Presets Profesionales por Objetivo
+    function applyPreset(presetKey, fromUserManual = false) {
+      const preset = presetDefinitions[presetKey];
+      if (!preset) return;
+
+      activePresetId = presetKey;
+      if (fromUserManual) {
+        userLockedPreset = true;
+      }
+
+      const autoBadge = document.getElementById('autodirector_detection_badge');
+      if (autoBadge) autoBadge.classList.add('hidden');
+      userManuallyTouched = { '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true };
+
+      document.querySelectorAll('.preset-card').forEach(btn => btn.classList.remove('preset-card-active'));
+      const activeBtn = document.getElementById(`btn_preset_${presetKey}`);
+      if (activeBtn) activeBtn.classList.add('preset-card-active');
+
+      // 1. Configurar Modo sin disparar prompt repetitivo
+      setMediaType(preset.mode, true);
+
+      // 2. Configurar Aspect Ratio
+      if (preset.ar) {
+        document.getElementById('aspectRatioSelect').value = preset.ar;
+      }
+
+      // 3. Resetear checkboxes de categorías sin disparar prompt repetitivo
+      for (let i = 1; i <= 9; i++) {
+        const chk = document.getElementById(`check_cat${i}`);
+        if (chk) {
+          chk.checked = false;
+          toggleBox(`cat${i}`, false, true);
+        }
+      }
+
+      // 4. Activar categorías del preset
+      for (let catId in preset.categories) {
+        const valEn = preset.categories[catId];
+        const chk = document.getElementById(`check_cat${catId}`);
+        if (chk) {
+          chk.checked = true;
+          toggleBox(`cat${catId}`, false, true);
+          const select = document.getElementById(`val_cat${catId}`);
+          if (select) {
+            for (let opt of select.options) {
+              if (opt.value === valEn || opt.value.includes(valEn)) {
+                opt.selected = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 5. Configurar Audio si aplica
+      const audioChk = document.getElementById('check_audio');
+      if (audioChk) {
+        audioChk.checked = (preset.mode === 'video') && (preset.audio !== false);
+      }
+
+      // 6. UI Feedback
+      const actionInput = document.getElementById('mainAction');
+      const currentText = actionInput.value.trim();
+
+      if (preset.contextPlaceholder) {
+        actionInput.placeholder = preset.contextPlaceholder;
+      }
+
+      const tagEl = document.getElementById('active_objective_tag');
+      const textEl = document.getElementById('active_objective_text');
+      const loadExampleBtn = document.getElementById('btn_load_example');
+
+      if (tagEl && textEl) {
+        tagEl.classList.remove('hidden');
+        textEl.innerHTML = userLockedPreset
+          ? `<span>🎯 Preset Manual: <strong class="text-white">${preset.title}</strong> — <span class="text-[#00D2FF]">Fijado por ti</span></span>`
+          : `<span>✨ Preset Auto-Detectado: <strong class="text-white">${preset.title}</strong> — <span class="text-[#00D2FF]">Detección inteligente activa</span></span>`;
+      }
+
+      if (loadExampleBtn) {
+        loadExampleBtn.classList.remove('hidden');
+      }
+
+      const banner = document.getElementById('preset_info_banner');
+      const bannerTitle = document.getElementById('preset_info_title');
+      const bannerDesc = document.getElementById('preset_info_desc');
+      if (banner && bannerTitle && bannerDesc) {
+        banner.classList.remove('hidden');
+        bannerTitle.textContent = `${preset.title}:`;
+        bannerDesc.textContent = preset.desc;
+      }
+
+      // 7. Generar el prompt UNA SOLA VEZ al final
+      if (currentText) {
+        generatePrompt();
+      } else {
+        const output = document.getElementById('outputBox');
+        output.innerHTML = `<span class="text-cyan-300 font-sans text-xs">✨ Objetivo <strong>${preset.title}</strong> configurado.<br><br>👉 Escribe tu producto, escena o contexto en <strong>"Acción principal"</strong> para ensamblar el prompt.</span>`;
+        actionInput.focus();
+      }
+    }
+
+    // Cargar ejemplo sugerido para el preset activo
+    function loadPresetExample() {
+      if (!activePresetId) return;
+      const preset = presetDefinitions[activePresetId];
+      if (preset && preset.exampleAction) {
+        const actionInput = document.getElementById('mainAction');
+        actionInput.value = preset.exampleAction;
+        generatePrompt();
+        actionInput.focus();
+      }
+    }
+
+    // Desactivar objetivo y volver a modo libre
+    function clearObjective(resetUserLock = true) {
+      activePresetId = null;
+      if (resetUserLock) {
+        userLockedPreset = false;
+      }
+      userManuallyTouched = {};
+      document.querySelectorAll('.preset-card').forEach(btn => btn.classList.remove('preset-card-active'));
+      const tagEl = document.getElementById('active_objective_tag');
+      if (tagEl) tagEl.classList.add('hidden');
+      const loadExampleBtn = document.getElementById('btn_load_example');
+      if (loadExampleBtn) loadExampleBtn.classList.add('hidden');
+      const banner = document.getElementById('preset_info_banner');
+      if (banner) banner.classList.add('hidden');
+      const actionInput = document.getElementById('mainAction');
+      actionInput.placeholder = i18n[currentLang].action_placeholder;
+      
+      const currentText = actionInput.value.trim();
+      if (currentText && autoDirectorActive) {
+        const d = detectPresetFromText(currentText);
+        if (d) applyPreset(d, false);
+        else applyBaselineCinematic();
+      } else {
+        autoUpdatePrompt();
+      }
+    }
+
+    // Restablecer Todo
+    function resetAll() {
+      clearObjective(true);
+      userLockedPreset = false;
+      userManuallyTouched = {};
+      const autoBadge = document.getElementById('autodirector_detection_badge');
+      if (autoBadge) autoBadge.classList.add('hidden');
+      document.getElementById('mainAction').value = '';
+      for (let i = 1; i <= 9; i++) {
+        const chk = document.getElementById(`check_cat${i}`);
+        if (chk) {
+          chk.checked = false;
+          toggleBox(`cat${i}`, false, true);
+        }
+      }
+      document.getElementById('check_audio').checked = true;
+      document.getElementById('outputBox').innerHTML = `<span id="ui_output_placeholder" class="text-slate-500 italic font-sans">${i18n[currentLang].output_placeholder}</span>`;
+      updateMetrics('');
+    }
+  </script>
+</body>
+</html>
